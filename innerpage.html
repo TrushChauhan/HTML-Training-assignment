@@ -20,8 +20,8 @@
                     <a class="navbar-brand" href="#">
                         <img src=images/images/logo.svg class="d-inline-block company-logo-navbar">
                     </a>
-                    <img src=images/images/search-icon.svg class="d-inline-block search-icon">
-                    <span class="search-text">Search</span>
+                    <img src=images/images/search-icon.svg class="d-inline-block search-icon m-3">
+                    <input class="search-text w-25 h-50" placeholder="Search">
                 </div>
                 <div class="float-right">
                     <img src=images/images/notification-icon.svg class="d-inline-block notification-icon">
@@ -74,7 +74,7 @@
                 </div>
             </nav>
         </div>
-        <div class="container flex-column analysis-content">
+        <div class="container flex-column analysis-conten m-3">
             <div class="row">
                 <div class="dashboard-title col">
                     Analysis
@@ -83,29 +83,29 @@
             <div class="row">
                 <div class="column-title col">One Column</div>
             </div>
-            <div class="row">
+            <div class="row mx-1 my-3">
                 <input type="text" placeholder="Name">
             </div>
-            <div class="row ">
-                <select class="form-select" aria-label="Default select example">
+            <div class="row mx-1 my-3">
+                <select class="form-select my-3" aria-label="Default select example">
                     <option selected>Dropdown</option>
                     <option value="1">One</option>
                     <option value="2">Two</option>
                     <option value="3">Three</option>
             </div>
-            <div class="row ">
+            <div class="row my-3">
                 <textarea name="Text1" cols="40" rows="5">Multiple line</textarea>
             </div>
             <div class="row">
                 <div class="col column-title">Two column</div>
             </div>
             <div class="row">
-                <input class="col" type="text" placeholder="Name">
-                <input class="col" type="text" placeholder="User Name">
+                <input class="col m-3" type="text" placeholder="Name">
+                <input class="col m-3" type="text" placeholder="User Name">
             </div>
             <div class="row">
-                <input class="col" type="text" placeholder="Password">
-                <select class="form-select" aria-label="Default select example">
+                <input class="col m-3" type="text" placeholder="Password">
+                <select class="form-select col m-3" aria-label="Default select example">
                     <option selected>Dropdown</option>
                     <option value="1">One</option>
                     <option value="2">Two</option>
@@ -116,30 +116,30 @@
                 <div class="column-title">Three column</div>
             </div>
             <div class="row">
-                <input type="text" class="col" placeholder="Focus">
-                <input type="password" class="col" placeholder="pass">
-                <input type="text" class="col" disabled value="John Doe">
+                <input type="text" class="col m-3" placeholder="Focus">
+                <input type="password" class="col m-3" placeholder="pass">
+                <input type="text" class="col m-3" disabled value="John Doe">
             </div>
             <div class="row">
                 <div class="column-title">Four column</div>
             </div>
             <div class="row">
-                <input type="text" class="col" placeholder="Designation">
-                <input type="password" class="col" placeholder="Name">
-                <input type="text" class="col" placeholder="John due">
-                <select class="form-select col" aria-label="Default select example">
+                <input type="text" class="col m-3" placeholder="Designation">
+                <input type="password" class="col m-3" placeholder="Name">
+                <input type="text" class="col m-3" placeholder="John due">
+                <select class="form-select col m-3" aria-label="Default select example">
                     <option selected>Select</option>
                     <option value="1">One</option>
                     <option value="2">Two</option>
                     <option value="3">Three</option>
                 </select>
-                <div class="row">
+                </div>
+                <div class="row ">
                     <div class="column-title">other design element</div>
                 </div>
                 <div class="row">
                     <div class="column-title">File upload</div>
                 </div>
-            </div>
             <button class="upload-btn">
                 <img src="images/images/cloud-upload-icon.svg" alt=“test”/>Upload
             </button>
@@ -151,7 +151,7 @@
                        value="option1"> Option 1
             </label>
         
-            <label>
+            <label class="mx-3">
                 <input type="radio" name="option" 
                        value="option2"> Option 2
             </label>
@@ -159,29 +159,29 @@
                 <div class="col column-title">Check-box</div>
             </div>
             <input type="checkbox" name="check">
-            <label>option 1</label>
+            <label >option 1</label>
             <input type="checkbox" name="check">
-            <label>option 2</label>
+            <label >option 2</label>
 
             <div class="row">
                 <div class="col column-title">Snackbar</div>
             </div>
             <div class="row">
-            <div class="alert alert-danger bg-white alert-primary col border-danger text-danger" role="alert">
+            <div class="alert alert-danger bg-white alert-primary col border-danger text-danger m-3" role="alert">
                 <img class="snackbar-icon" src="images/images/error-icon.svg" alt="">
                 This is an error message
             </div>
-            <div class="alert alert-primary bg-white col border-info text-info" role="alert">
+            <div class="alert alert-primary bg-white col border-info text-info m-3" role="alert">
                 <img class="snackbar-icon" src="images/images/info-icon.svg" alt="">
                 This is an information message!
             </div>
             </div>
             <div class="row">
-                <div class="alert alert-danger bg-white alert-primary col border-warning text-warning" role="alert">
+                <div class="alert alert-danger bg-white alert-primary col border-warning text-warning m-3" role="alert">
                     <img class="snackbar-icon" src="images/images/warning-icon.svg" alt="">
                     This is a warning message!
                 </div>
-                <div class="alert alert-primary bg-white col border-success text-success" role="alert">
+                <div class="alert alert-primary bg-white col border-success text-success m-3" role="alert">
                     <img class="snackbar-icon" src="images/images/success-icon.svg" alt="">
                     This is an sucess message!
                 </div>
@@ -192,16 +192,19 @@
             <button class="primary-btn">
                 Primary
             </button>
-            <button class="secondary-btn">
+            <button class="secondary-btn m-3">
                 Secondary
             </button>
             <div class="row">
                 <div class="col column-title">Tabs</div>
             </div>
             <ul class="nav nav-pills">
-                <li class="active"><a href="#">Home</a></li>
-                <li><a href="#">Tab 1</a></li>
-                <li><a href="#">Tab 2</a></li>
-                <li><a href="#">Tab 3</a></li>
+                <li><a href="#" class="text-decoration-none text-danger m-3"> Tab 1</a> </li>
+                <li><a href="#" class="text-decoration-none m-3">Tab 2</a></li>
+                <li><a href="#" class="text-decoration-none m-3">Tab 3</a></li>
               </ul>
+            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. 
+               Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it
+               to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. 
+               It was popularised in the 1960s with the release of Letraset sheets containing</p>
         </div>
