@@ -1,210 +1,1911 @@
-<!DOCTYPE html>
-<html>
+using Entity.Models;
+using Microsoft.EntityFrameworkCore;
+using Repository.Interfaces;
 
-<head>
-    <title>assignment</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-</head>
+namespace Repository.Implementations
+{
+    public class OrderRepository : IOrderRepository
+    {
+        private readonly ApplicationDbContext _context;
 
-<body>
-    <div class=" navbar">
-        <nav class="navbar navbar-expand-lg">
-            <div class="container-fluid">
-                <div class="float left">
-                    <a class="navbar-brand" href="#">
-                        <img src=images/images/menu-bar.svg class="d-inline-block menu-bar">
-                    </a>
-                    <a class="navbar-brand" href="#">
-                        <img src=images/images/logo.svg class="d-inline-block company-logo-navbar">
-                    </a>
-                    <img src=images/images/search-icon.svg class="d-inline-block search-icon m-3">
-                    <input class="search-text w-25 h-50" placeholder="Search">
-                </div>
-                <div class="float-right">
-                    <img src=images/images/notification-icon.svg class="d-inline-block notification-icon">
-                    <img class="col profile-picture" src="images/images/profile.png" alt="">
-                    <span class="profile-name">John Doe</span>
-                    <img class="col" src="images/images/downward-arrow.svg" alt="">
-                </div>
-            </div>
-        </nav>
-    </div>
-    <div class="d-flex ">
-        <div class="side-bar ">
-            <nav class="navbar-expand-lg">
-                <div class="container d-flex flex-column">
-                    <div class="side-bar-item">
-                        <img src="images/images/dashboard-active.svg" height="20px"
-                            class="d-inline-block align-text-bottom nav-item">
-                        <span>Dashboard</span>
-                    </div>
-                    <div class="side-bar-item">
-                        <img src="images/images/graph-default.svg" height="20px"
-                            class="d-inline-block align-text-bottom nav-item" class="text-danger">
-                        Analysis
-                    </div>
-                    <div class="side-bar-item">
-                        <img src="images/images/inbox-default.svg" height="20px"
-                            class="d-inline-block align-text-bottom nav-item">
-                        Inbox
-                    </div>
-                    <div class="side-bar-item">
-                        <img src="images/images/clock-default.svg" height="20px"
-                            class="d-inline-block align-text-bottom nav-item">
-                        History
-                    </div>
-                    <div class="side-bar-item">
-                        <img src="images/images/user-default.svg" height="20px"
-                            class="d-inline-block align-text-bottom nav-item">
-                        Users
-                    </div>
-                    <div class="side-bar-item">
-                        <img src="images/images/maintenance-default.svg" height="20px"
-                            class="d-inline-block align-text-bottom nav-item">
-                        Maintenance
-                    </div>
-                    <div class="side-bar-item">
-                        <img src="images/images/setting-default.svg" height="20px"
-                            class="d-inline-block align-text-bottom nav-item">
-                        Settings
-                    </div>
-                </div>
-            </nav>
-        </div>
-        <div class="container flex-column analysis-conten m-3">
-            <div class="row">
-                <div class="dashboard-title col">
-                    Analysis
-                </div>
-            </div>
-            <div class="row">
-                <div class="column-title col">One Column</div>
-            </div>
-            <div class="row mx-1 my-3">
-                <input type="text" placeholder="Name">
-            </div>
-            <div class="row mx-1 my-3">
-                <select class="form-select my-3" aria-label="Default select example">
-                    <option selected>Dropdown</option>
-                    <option value="1">One</option>
-                    <option value="2">Two</option>
-                    <option value="3">Three</option>
-            </div>
-            <div class="row my-3">
-                <textarea name="Text1" cols="40" rows="5">Multiple line</textarea>
-            </div>
-            <div class="row">
-                <div class="col column-title">Two column</div>
-            </div>
-            <div class="row">
-                <input class="col m-3" type="text" placeholder="Name">
-                <input class="col m-3" type="text" placeholder="User Name">
-            </div>
-            <div class="row">
-                <input class="col m-3" type="text" placeholder="Password">
-                <select class="form-select col m-3" aria-label="Default select example">
-                    <option selected>Dropdown</option>
-                    <option value="1">One</option>
-                    <option value="2">Two</option>
-                    <option value="3">Three</option>
-                </select>
-            </div>
-            <div class="row">
-                <div class="column-title">Three column</div>
-            </div>
-            <div class="row">
-                <input type="text" class="col m-3" placeholder="Focus">
-                <input type="password" class="col m-3" placeholder="pass">
-                <input type="text" class="col m-3" disabled value="John Doe">
-            </div>
-            <div class="row">
-                <div class="column-title">Four column</div>
-            </div>
-            <div class="row">
-                <input type="text" class="col m-3" placeholder="Designation">
-                <input type="password" class="col m-3" placeholder="Name">
-                <input type="text" class="col m-3" placeholder="John due">
-                <select class="form-select col m-3" aria-label="Default select example">
-                    <option selected>Select</option>
-                    <option value="1">One</option>
-                    <option value="2">Two</option>
-                    <option value="3">Three</option>
-                </select>
-                </div>
-                <div class="row ">
-                    <div class="column-title">other design element</div>
-                </div>
-                <div class="row">
-                    <div class="column-title">File upload</div>
-                </div>
-            <button class="upload-btn">
-                <img src="images/images/cloud-upload-icon.svg" alt=“test”/>Upload
-            </button>
-            <div class="row">
-                <div class="col column-title">Radio-button</div>
-            </div>
-            <label>
-                <input type="radio" name="option" 
-                       value="option1"> Option 1
-            </label>
+        public OrderRepository(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public IQueryable<Customerorder> GetAll()
+        {
+            return _context.Customerorders.AsQueryable();
+        }
+
+        public async Task<Customerorder> GetOrderWithDetails(int orderId)
+        {
+            return await _context.Customerorders
+                .Include(o => o.Customer)
+                .Include(o => o.Ordertables)
+                    .ThenInclude(ot => ot.Table)
+                        .ThenInclude(t => t.Section)
+                .Include(o => o.Orderdetails)
+                    .ThenInclude(od => od.Item)
+                .Include(o => o.Orderdetails)
+                    .ThenInclude(od => od.Orderdetailmodifiers)
+                        .ThenInclude(odm => odm.Modifier)
+                .Include(o => o.Ordertaxes)
+                    .ThenInclude(ot => ot.Tax)
+                .Include(o => o.Invoices)
+                .FirstOrDefaultAsync(o => o.Orderid == orderId);
+        }
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
+    }
+}using Entity.Models;
+using Entity.ViewModel;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
+using OfficeOpenXml.Drawing;
+using OfficeOpenXml.Style;
+using Repository.Interfaces;
+using SelectPdf;
+using Service.Interfaces;
+using System.Drawing;
+
+namespace Service.Implementations
+{
+    public class OrderService : IOrderService
+    {
+        private readonly IOrderRepository _orderRepository;
+
+        public OrderService(
+            IOrderRepository orderRepository)
+        {
+            _orderRepository = orderRepository;
+
+        }
+
+        public async Task<(List<OrderViewModel> Orders, int TotalCount)> GetOrders(OrderFilterModel filters)
+        {
+            var query = _orderRepository.GetAll()
+                .Include(o => o.Customer)
+                .Where(o => !o.Isdeleted);
+
+            // Apply filters 
+            if (!string.IsNullOrEmpty(filters.SearchTerm))
+            {
+                query = query.Where(o =>
+                    o.Orderid.ToString().Contains(filters.SearchTerm) ||
+                    o.Customer.Customername.Contains(filters.SearchTerm));
+            }
+
+            if (filters.Status != "All Status" && !string.IsNullOrEmpty(filters.Status))
+            {
+                query = query.Where(o => o.Status == filters.Status);
+            }
+
+            if (filters.FromDate.HasValue)
+            {
+                var fromDate = DateOnly.FromDateTime(filters.FromDate.Value);
+                query = query.Where(o => o.Date >= fromDate);
+            }
+
+            if (filters.ToDate.HasValue)
+            {
+                DateOnly toDate = DateOnly.FromDateTime(filters.ToDate.Value);
+                query = query.Where(o => o.Date <= toDate);
+            }
+
+            if (filters.TimePeriod != "All time" && !string.IsNullOrEmpty(filters.TimePeriod))
+            {
+                DateTime now = DateTime.Now;
+                switch (filters.TimePeriod)
+                {
+                    case "Last 7 days":
+                        var sevenDaysAgo = now.AddDays(-7);
+                        query = query.Where(o => o.Createddate >= sevenDaysAgo);
+                        break;
+                    case "Last 30 days":
+                        var thirtyDaysAgo = now.AddDays(-30);
+                        query = query.Where(o => o.Createddate >= thirtyDaysAgo);
+                        break;
+                    case "Current Month":
+                        var firstDayOfMonth = new DateTime(now.Year, now.Month, 1);
+                        query = query.Where(o => o.Createddate >= firstDayOfMonth);
+                        break;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(filters.SortField))
+            {
+                switch (filters.SortField)
+                {
+                    case "Order":
+                        query = filters.SortAscending
+                            ? query.OrderBy(o => o.Orderid)
+                            : query.OrderByDescending(o => o.Orderid);
+                        break;
+                    case "Date":
+                        query = filters.SortAscending
+                            ? query.OrderBy(o => o.Date)
+                            : query.OrderByDescending(o => o.Date);
+                        break;
+                    case "Customer":
+                        query = filters.SortAscending
+                            ? query.OrderBy(o => o.Customer.Customername)
+                            : query.OrderByDescending(o => o.Customer.Customername);
+                        break;
+                    case "Total Amount":
+                        query = filters.SortAscending
+                            ? query.OrderBy(o => o.Totalamount)
+                            : query.OrderByDescending(o => o.Totalamount);
+                        break;
+                }
+            }
+
+            int totalCount = await query.CountAsync();
+
+            var pagedQuery = query
+                .Skip((filters.PageNumber - 1) * filters.PageSize)
+                .Take(filters.PageSize);
+
+            var orders = await pagedQuery.ToListAsync();
+            var orderViewModels = orders.Select(o => new OrderViewModel
+            {
+                OrderId = o.Orderid,
+                Date = o.Date.ToDateTime(TimeOnly.MinValue),
+                CustomerName = o.Customer.Customername,
+                Status = o.Status,
+                PaymentMode = o.Paymentmode,
+                Rating = o.Rating,
+                TotalAmount = o.Totalamount
+            }).ToList();
+
+            return (orderViewModels, totalCount);
+        }
+
+        public async Task<OrderDetailsViewModel> GetOrderDetails(int orderId)
+        {
+            var order = await _orderRepository.GetOrderWithDetails(orderId);
+            if (order == null) return null;
+
+            var invoice = order.Invoices.FirstOrDefault();
+
+            return new OrderDetailsViewModel
+            {
+                OrderId = order.Orderid,
+                InvoiceNumber = invoice != null ? $"#{invoice.Invoiceid}" : "N/A",
+                Status = order.Status,
+                PaymentMode = order.Paymentmode,
+                PaidOn = invoice?.Createddate ?? order.Createddate,
+                PlacedOn = order.Createddate,
+                ModifiedOn = order.Modifieddate,
+                OrderDuration = (invoice?.Createddate ?? DateTime.Now) - order.Createddate,
+                TotalAmount = order.Totalamount,
+                SubTotal = order.Orderdetails.Sum(od => od.Quantity * od.Item.Rate),
+                CustomerName = order.Customer?.Customername,
+                Phone = order.Customer?.Phonenumber,
+                Email = order.Customer?.Email,
+                NumberOfPersons = order.Ordertables.FirstOrDefault()?.Table?.Capacity ?? 0,
+                TableName = order.Ordertables.FirstOrDefault()?.Table?.Tablename ?? "N/A",
+                SectionName = order.Ordertables.FirstOrDefault()?.Table?.Section?.Sectionname ?? "N/A",
+                OrderItems = order.Orderdetails.Select((od, index) => new OrderItemViewModel
+                {
+                    SrNo = index + 1,
+                    ItemName = od.Item.Itemname,
+                    Quantity = od.Quantity + od.Preparedquantity,
+                    Price = od.Item.Rate,
+                    TotalAmount = od.Quantity * od.Item.Rate,
+                    Modifiers = od.Orderdetailmodifiers.Select(odm => new OrderItemModifierViewModel
+                    {
+                        ModifierName = odm.Modifier?.Modifiername,
+                        Quantity = 1,
+                        Price = odm.Modifier?.Rate ?? 0,
+                        TotalAmount = odm.Modifier?.Rate ?? 0
+                    }).ToList()
+                }).ToList(),
+                Taxes = order.Ordertaxes.Select(ot => new OrderTaxViewModel
+                {
+                    TaxName = ot.Tax?.Taxname,
+                    TaxValue = ot.Taxvalue,
+                }).ToList()
+            };
+        }
+
+        public async Task<byte[]> GenerateOrderPdf(
+    int orderId,
+    ControllerContext controllerContext,
+    ViewDataDictionary viewData,
+    ITempDataDictionary tempData)
+        {
+            var orderDetails = await GetOrderDetails(orderId);
+            if (orderDetails == null) return null;
+
+            // Render the view to HTML string
+            var htmlContent = await controllerContext.RenderViewAsync(
+                "OrderDetailPdf",
+                orderDetails,
+                viewData,
+                tempData);
+
+            // Configure PDF converter
+            var converter = new HtmlToPdf();
+            converter.Options.PdfPageSize = PdfPageSize.A4;
+            converter.Options.PdfPageOrientation = PdfPageOrientation.Portrait;
+            converter.Options.MarginLeft = 10;
+            converter.Options.MarginRight = 10;
+            converter.Options.MarginTop = 10;
+            converter.Options.MarginBottom = 10;
+
+            // Convert HTML to PDF
+            var pdfDocument = converter.ConvertHtmlString(htmlContent);
+
+            // Save to memory stream
+            using var memoryStream = new MemoryStream();
+            pdfDocument.Save(memoryStream);
+            pdfDocument.Close();
+
+            return memoryStream.ToArray();
+        }
+        public async Task<byte[]> ExportOrdersToExcel(OrderFilterModel filters)
+        {
+            filters.PageNumber = 1;
+            filters.PageSize = int.MaxValue;
+
+            var (orders, _) = await GetOrders(filters);
+
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            using var package = new ExcelPackage();
+            var worksheet = package.Workbook.Worksheets.Add("Orders");
+
+            var headers = new string[]
+            {
+        "Order ID", "Date", "Customer", "Status",
+        "Payment Mode", "Rating", "Total Amount"
+            };
+
+            void SetInfoCell(string title, string value, int startRow, int startCol)
+            {
+                var titleCell = worksheet.Cells[startRow, startCol, startRow + 1, startCol + 1];
+                titleCell.Merge = true;
+                titleCell.Value = title;
+                titleCell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                titleCell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(79, 129, 189));
+                titleCell.Style.Font.Color.SetColor(Color.White);
+                titleCell.Style.Font.Bold = true;
+                titleCell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                titleCell.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+
+                var valueCell = worksheet.Cells[startRow, startCol + 2, startRow + 1, startCol + 5];
+                valueCell.Merge = true;
+                valueCell.Value = value;
+                valueCell.Style.Font.Bold = true;
+                valueCell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                valueCell.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+            }
+
+            // Add logo
+            using (FileStream stream = new FileStream(@"D:\Project\Pizza_Shop\PizzaShopProject\images\logos\pizzashop_logo.png", FileMode.Open))
+            {
+                ExcelPicture excelImage = worksheet.Drawings.AddPicture("logo", stream);
+                excelImage.SetPosition(2, 0, 12, 0);
+                excelImage.SetSize(100, 100);
+            }
+
+            // Add info section
+            SetInfoCell("Status Filter:", filters.Status ?? "All Status", 1, 1);
+            SetInfoCell("Search Text:", filters.SearchTerm ?? "None", 1, 7);
+            SetInfoCell("Date Range:", filters.FromDate.HasValue && filters.ToDate.HasValue
+                ? $"{filters.FromDate.Value:yyyy-MM-dd} to {filters.ToDate.Value:yyyy-MM-dd}"
+                : filters.TimePeriod ?? "All time", 4, 1);
+            SetInfoCell("Number of Records:", orders.Count.ToString(), 4, 7);
+
+            // Add headers at row 9
+            for (int i = 0; i < headers.Length; i++)
+            {
+                worksheet.Cells[9, i + 1].Value = headers[i];
+                var cell = worksheet.Cells[9, i + 1];
+                cell.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                cell.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(79, 129, 189));
+                cell.Style.Font.Color.SetColor(Color.White);
+                cell.Style.Font.Bold = true;
+                cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                cell.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+            }
+
+            // Fill order data starting from row 10
+            int row = 10;
+            foreach (var order in orders)
+            {
+                worksheet.Cells[row, 1].Value = order.OrderId;
+                worksheet.Cells[row, 2].Value = order.Date;
+                worksheet.Cells[row, 2].Style.Numberformat.Format = "yyyy-mm-dd";
+                worksheet.Cells[row, 3].Value = order.CustomerName;
+                worksheet.Cells[row, 4].Value = order.Status;
+                worksheet.Cells[row, 5].Value = order.PaymentMode;
+                worksheet.Cells[row, 6].Value = order.Rating;
+                worksheet.Cells[row, 7].Value = order.TotalAmount;
+                row++;
+            }
+
+            // Align all data cells
+            for (int i = 1; i <= orders.Count + 9; i++)
+            {
+                for (int j = 1; j <= headers.Length + 6; j++)
+                {
+                    worksheet.Cells[i, j].Style.HorizontalAlignment = ExcelHorizontalAlignment.CenterContinuous;
+                }
+            }
+            worksheet.Column(1).Width = 10;
+            worksheet.Column(2).Width = 20;
+            worksheet.Column(3).Width = 20;
+            worksheet.Column(4).Width = 30;
+            worksheet.Column(5).Width = 30;
+            worksheet.Column(6).Width = 10;
+            worksheet.Column(7).Width = 10;
+
+            //worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+            return package.GetAsByteArray();
+        }
+        public async Task<List<KotOrderViewModel>> GetKitchenOrdersAsync(int? categoryId, string statusFilter)
+        {
+            var orders = await _orderRepository.GetAll()
+                .Include(o => o.Orderdetails)
+                .Include(o => o.Orderdetails)
+                    .ThenInclude(od => od.Item)
+                        .ThenInclude(i => i.Category)
+                .Include(o => o.Orderdetails)
+                    .ThenInclude(od => od.Orderdetailmodifiers)
+                        .ThenInclude(odm => odm.Modifier)
+                .Include(o => o.Ordertables)
+                    .ThenInclude(ot => ot.Table)
+                        .ThenInclude(t => t.Section)
+                .OrderByDescending(o => o.Createddate)
+                .ToListAsync();
+
+            return orders
+                .Select(o => new KotOrderViewModel
+                {
+                    OrderId = o.Orderid,
+                    OrderNumber = $"#{o.Orderid}",
+                    TimeSincePlaced = FormatTimeSpan(DateTime.Now - o.Createddate),
+                    Location = GetOrderLocation(o),
+                    Status = GetOrderStatus(o),
+                    Items = o.Orderdetails
+                        .Where(od =>
+                            (!categoryId.HasValue || od.Item.Categoryid == categoryId) &&
+                            (statusFilter == null ||
+                                (statusFilter == "InProgress" && od.Status != "Ready" && od.Quantity>0) ||
+                                (statusFilter == "Ready" && (od.Status == "Ready" || od.Preparedquantity>0))
+                            )
+                        )
+                        .Select(od => new KotItemViewModel
+                        {
+                            ItemId = od.Item.Itemid,
+                            ItemName = od.Item.Itemname,
+                            Quantity = od.Quantity,
+                            Status = od.Status,
+                            PreparedQuantity = od.Preparedquantity,
+                            Modifiers = od.Orderdetailmodifiers
+                                .Select(m => m.Modifier.Modifiername)
+                                .ToList()
+                        }).ToList()
+                })
+                .Where(o => o.Items.Any())
+                .ToList();
+        }
+
+        public async Task<bool> MarkOrderItemsAsPreparedAsync(int orderId, List<PreparedItemViewModel> items)
+        {
+            var order = await _orderRepository.GetOrderWithDetails(orderId);
+            if (order == null)
+                throw new Exception("Order not found");
+
+            foreach (var preparedItem in items)
+            {
+                var orderDetail = order.Orderdetails
+                    .FirstOrDefault(od => od.Item.Itemid == preparedItem.ItemId);
+
+                if (orderDetail != null)
+                {
+                    orderDetail.Quantity -= preparedItem.Quantity;
+                    if((orderDetail.Quantity-preparedItem.Quantity) == 0){
+                        orderDetail.Status = "Ready";
+                    }
+                    orderDetail.Preparedquantity += preparedItem.Quantity;
+                }
+            }
+
+            // Check if all items are prepared
+            bool allPrepared = order.Orderdetails.All(od => od.Status == "Ready");
+            if (allPrepared)
+            {
+                order.Status = "Ready";
+            }
+
+            await _orderRepository.SaveChangesAsync();
+            return true;
+        }
+        public async Task<bool> MarkOrderItemsAsInProgressAsync(int orderId, List<PreparedItemViewModel> items)
+        {
+            var order = await _orderRepository.GetOrderWithDetails(orderId);
+
+            foreach (var item in items)
+            {
+                var orderDetail = order.Orderdetails
+                    .FirstOrDefault(od => od.Item.Itemid == item.ItemId);
+
+                if (orderDetail != null && orderDetail.Preparedquantity >= item.Quantity)
+                {
+                    orderDetail.Preparedquantity -= item.Quantity;
+                    orderDetail.Quantity += item.Quantity;
+                    orderDetail.Status = (orderDetail.Preparedquantity-item.Quantity) > 0 ? "Ready" : "InProgress";
+                }  
+            }
+
+            order.Status = GetOrderStatus(order); 
+            await _orderRepository.SaveChangesAsync();
+            return true;
+        }
+        private string FormatTimeSpan(TimeSpan span)
+        {
+            if (span.Days > 0)
+                return $"{span.Days} days {span.Hours} hours {span.Minutes} min {span.Seconds} sec";
+            else if (span.Hours > 0)
+                return $"{span.Hours} hours {span.Minutes} min {span.Seconds} sec";
+            else
+                return $"{span.Minutes} min {span.Seconds} sec";
+        }
+
+        private string GetOrderLocation(Customerorder order)
+        {
+            var table = order.Ordertables.FirstOrDefault()?.Table;
+            var section = table?.Section;
+
+            if (table != null && section != null)
+                return $"{section.Sectionname} • {table.Tablename}";
+            else if (table != null)
+                return table.Tablename;
+            else
+                return "Takeaway";
+        }
+
+        private string GetOrderStatus(Customerorder order)
+        {
+            if (order.Status?.ToLower() == "ready")
+                return "Ready";
+            bool allPrepared = order.Orderdetails.Count > 0 &&
+                              order.Orderdetails.All(od => od.Status == "Ready");
+            if (allPrepared)
+                return "Ready";
+
+            return "InProgress";
+        }
+    }
+}using Entity.ViewModel;
+using Microsoft.AspNetCore.Mvc;
+using Service.Interfaces;
+
+namespace Web.Controllers
+{
+    public class OrderAppController : Controller
+    {
+        private readonly IOrderService _orderService;
+        private readonly IMenuService _menuService;
+        private readonly IWaitingTokenService _waitingTokenService;
+        private readonly ISectionAndTableService _sectionAndTableService;
+
+        public OrderAppController(IOrderService orderService, IMenuService menuService, ISectionAndTableService sectionAndTableService, IWaitingTokenService waitingTokenService)
+        {
+            _orderService = orderService;
+            _menuService = menuService;
+            _sectionAndTableService = sectionAndTableService;
+            _waitingTokenService = waitingTokenService;
+        }
+        [HttpGet]
+        public async Task<IActionResult> KOT()
+        {
+            var categories = await _menuService.GetCategoriesAsync();
+            return View(categories);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetKitchenOrders(int? categoryId, string status)
+        {
+            var filteredCategoryId = categoryId == 0 ? null : categoryId;
+            var orders = await _orderService.GetKitchenOrdersAsync(filteredCategoryId, status);
+            return Ok(orders);
+        }
+        [HttpGet]
+        public async Task<IActionResult> OrderMenu()
+        {
+            var categories = await _menuService.GetCategoriesAsync();
+            var allItems = await _menuService.GetAllMenuItemsAsync();
+            var viewModel = new OrderMenuViewModel
+            {
+                Categories = categories,
+                MenuItems = allItems
+            };
+            return View(viewModel);
+        }
+        [HttpPost]
+        public async Task<IActionResult> MarkOrderAsPrepared([FromBody] PreparedOrderViewModel model)
+        {
+            try
+            {
+                var result = await _orderService.MarkOrderItemsAsPreparedAsync(model.OrderId, model.Items);
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+        [HttpPost]
+        public async Task<IActionResult> MarkOrderAsInProgress([FromBody] PreparedOrderViewModel model)
+        {
+            var result = await _orderService.MarkOrderItemsAsInProgressAsync(model.OrderId, model.Items);
+            return Ok(new { success = true });
+        }
+        [HttpGet]
+        public async Task<IActionResult> Tables()
+        {
+            var sections = await _sectionAndTableService.GetSectionsAsync();
+            var viewModel = sections.Select(s => new SectionTablesViewModel
+            {
+                Section = s,
+                Tables = _sectionAndTableService.GetTablesBySectionAsync(s.Sectionid, 1, 100, "").Result.tables
+            }).ToList();
+
+            return View(viewModel);
+        }
+        [HttpGet]
+        public async Task<IActionResult> WaitingList()
+        {
+            var viewModel = await _waitingTokenService.GetWaitingListData();
+            return View(viewModel);
+        }
+        [HttpPost]
+        public async Task<IActionResult> AddWaitingToken([FromBody] WaitingTokenViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                await _waitingTokenService.AddWaitingToken(model);
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetWaitingTokens(int? sectionId)
+        {
+            var tokens = await _waitingTokenService.GetWaitingTokens(sectionId);
+            return Ok(tokens);
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetTokenDetails(int tokenId)
+        {
+            try
+            {
+                var token = await _waitingTokenService.GetTokenDetailsAsync(tokenId);
+                if (token == null)
+                {
+                    return NotFound();
+                }
+                return Ok(token);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateWaitingToken([FromBody] WaitingTokenViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                await _waitingTokenService.UpdateWaitingTokenAsync(model);
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+        [HttpPost]
+        public async Task<IActionResult> DeleteToken(int tokenId)
+        {
+            try
+            {
+                await _waitingTokenService.DeleteTokenAsync(tokenId);
+                return Ok(new { success = true, message = "Token deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+    }
+}
+using Entity.Models;
+using Entity.ViewModel;
+using Repository.Interfaces;
+using Service.Interfaces;
+
+namespace Service.Implementations;
+
+public class SectionAndTableService : ISectionAndTableService
+{
+    private readonly ISectionAndTableRepository _sectionAndTablerepo;
+    private readonly MappingService _mappingService;
+    public SectionAndTableService(ISectionAndTableRepository sectionAndTableRepository, MappingService mappingService)
+    {
+        _sectionAndTablerepo = sectionAndTableRepository;
+        _mappingService = mappingService;
+    }
+    public async Task<List<SectionViewModel>> GetSectionsAsync()
+    {
+        List<Section> sections = await _sectionAndTablerepo.GetSectionsAsync();
+        List<SectionViewModel> sectionViews = new();
+        foreach (Section section in sections)
+        {
+            sectionViews.Add(await _mappingService.MapToViewSectionModel(section));
+        }
+        return sectionViews;
+    }
+    public async Task AddSectionAsync(SectionViewModel sectionViewModel)
+    {
+        Section section = new Section
+        {
+            Sectionid = sectionViewModel.Sectionid,
+            Sectionname = sectionViewModel.Sectionname,
+            Description = sectionViewModel.Description,
+            Createddate = DateTime.Now,
+            Isdeleted = false
+        };
+        await _sectionAndTablerepo.AddSectionAsync(section);
+    }
+    public async Task DeleteSectionAsync(int id)
+    {
+        await _sectionAndTablerepo.DeleteSectionAsync(id);
+    }
+    public async Task<SectionViewModel> GetSectionByIdAsync(int id)
+    {
+        Section section = await _sectionAndTablerepo.GetSectionByIdAsync(id);
+        return await _mappingService.MapToViewSectionModel(section);
+    }
+    public async Task<bool> UpdateSectionAsync(SectionViewModel model)
+    {
+        var section = new Section
+        {
+            Sectionid = model.Sectionid,
+            Sectionname = model.Sectionname,
+            Modifieddate = DateTime.Now,
+            Description = model.Description,
+            Createddate = model.Createddate
+        };
+        return await _sectionAndTablerepo.UpdateSectionAsync(section);
+    }
+    public async Task<(List<DinetableViewModel> tables, int totalItems)> GetTablesBySectionAsync(int sectionId, int page, int pageSize, string searchTerm)
+    {
+        return await _sectionAndTablerepo.GetTablesBySectionAsync(sectionId, page, pageSize, searchTerm);
+    }
+    public async Task AddTableAsync(DinetableViewModel tablemodel)
+    {
+        Dinetable table = new Dinetable
+        {
+            Sectionid = tablemodel.Sectionid,
+            Tablename = tablemodel.Tablename,
+            Status = tablemodel.Status,
+            Capacity = tablemodel.Capacity,
+            Isdeleted = false,
+            Createddate = DateTime.Now,
+            Modifieddate = DateTime.Now
+        };
+        await _sectionAndTablerepo.AddTableAsync(table);
+    }
+    public async Task<DinetableViewModel> GetTableByIdAsync(int id)
+    {
+        Dinetable table = await _sectionAndTablerepo.GetTableByIdAsync(id);
+        return await _mappingService.MapToViewTableModel(table);
+    }
+
+    public async Task<bool> UpdateTableAsync(DinetableViewModel model)
+    {
+        var table = new Dinetable
+        {
+            Tableid = model.Tableid,
+            Tablename = model.Tablename,
+            Capacity = model.Capacity,
+            Status = model.Status,
+            Sectionid = model.Sectionid,
+            Modifieddate = DateTime.Now
+        };
+        return await _sectionAndTablerepo.UpdateTableAsync(table);
+    }
+    public async Task DeleteTableAsync(int tableId)
+    {
+        await _sectionAndTablerepo.DeleteTableAsync(tableId);
+    }
+    public async Task MassDeleteTablesAsync(List<int> tableIds)
+    {
+        await _sectionAndTablerepo.MassDeleteTablesAsync(tableIds);
         
-            <label class="mx-3">
-                <input type="radio" name="option" 
-                       value="option2"> Option 2
-            </label>
-            <div class="row">
-                <div class="col column-title">Check-box</div>
-            </div>
-            <input type="checkbox" name="check">
-            <label >option 1</label>
-            <input type="checkbox" name="check">
-            <label >option 2</label>
+    }
+}
+using Entity.Models;
+using Entity.ViewModel;
+using Microsoft.EntityFrameworkCore;
+using Repository.Interfaces;
 
-            <div class="row">
-                <div class="col column-title">Snackbar</div>
+namespace Repository.Implementations;
+
+public class SectionAndTableRepository : ISectionAndTableRepository
+{
+    private readonly ApplicationDbContext _context;
+    public SectionAndTableRepository(ApplicationDbContext dbContext)
+    {
+        _context = dbContext;
+    }
+    public async Task<List<Section>> GetSectionsAsync()
+    {
+        return await _context.Sections
+                .Where(c => !c.Isdeleted)
+                .ToListAsync();
+    }
+    public async Task AddSectionAsync(Section section)
+    {
+        await _context.Sections.AddAsync(section);
+        await _context.SaveChangesAsync();
+    }
+    public async Task DeleteSectionAsync(int id)
+    {
+        Section section = await _context.Sections.FirstOrDefaultAsync(s => s.Sectionid == id);
+        section.Isdeleted = true;
+        await _context.SaveChangesAsync();
+    }
+    public async Task<Section> GetSectionByIdAsync(int id)
+    {
+        return await _context.Sections.FirstOrDefaultAsync(s => s.Sectionid == id);
+    }
+    public async Task<bool> UpdateSectionAsync(Section section)
+    {
+        Section? existingsection = await _context.Sections.FirstOrDefaultAsync(s => s.Sectionid == section.Sectionid);
+        if (existingsection == null)
+        {
+            return false;
+        }
+        existingsection.Description = section.Description;
+        existingsection.Sectionname = section.Sectionname;
+        existingsection.Modifieddate = DateTime.Now;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+    public async Task<(List<DinetableViewModel> tables, int totalItems)> GetTablesBySectionAsync(int sectionId, int page, int pageSize, string searchTerm)
+    {
+        var query = _context.Dinetables
+            .Where(t => t.Sectionid == sectionId && !t.Isdeleted);
+
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            query = query.Where(t => t.Tablename.Contains(searchTerm));
+        }
+
+        int totalItems = await query.CountAsync();
+
+        List<DinetableViewModel> tables = await query
+            .OrderBy(t => t.Tablename)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(t => new DinetableViewModel
+            {
+                Tableid = t.Tableid,
+                Tablename = t.Tablename,
+                Capacity = t.Capacity,
+                Status = t.Status,
+                Sectionid = t.Sectionid
+            })
+            .ToListAsync();
+
+        return (tables, totalItems);
+    }
+    public async Task AddTableAsync(Dinetable table)
+    {
+        await _context.AddAsync(table);
+        await _context.SaveChangesAsync();
+    }
+    public async Task<Dinetable> GetTableByIdAsync(int id)
+    {
+        return await _context.Dinetables.FirstOrDefaultAsync(t => t.Tableid == id && !t.Isdeleted);
+    }
+
+    public async Task<bool> UpdateTableAsync(Dinetable table)
+    {
+        Dinetable? existingTable = await _context.Dinetables.FirstOrDefaultAsync(t => t.Tableid == table.Tableid);
+        if (existingTable == null)
+        {
+            return false;
+        }
+
+        existingTable.Tablename = table.Tablename;
+        existingTable.Capacity = table.Capacity;
+        existingTable.Status = table.Status;
+        existingTable.Sectionid = table.Sectionid;
+        existingTable.Modifieddate = DateTime.Now;
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+    public async Task DeleteTableAsync(int tableId)
+    {
+        Dinetable table = await _context.Dinetables.FirstOrDefaultAsync(t => t.Tableid == tableId);
+        if (table != null)
+        {
+            table.Isdeleted = true;
+            await _context.SaveChangesAsync();
+        }
+    }
+    public async Task MassDeleteTablesAsync(List<int> ids)
+    {
+        var tables = await _context.Dinetables
+            .Where(t => ids.Contains(t.Tableid))
+            .ToListAsync();
+
+        foreach (var table in tables)
+        {
+            table.Isdeleted = true;
+        }
+
+        await _context.SaveChangesAsync();
+    }
+}
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+
+namespace Entity.Models;
+
+[Table("customerorder")]
+public partial class Customerorder
+{
+    [Key]
+    [Column("orderid")]
+    public int Orderid { get; set; }
+
+    [Column("customerid")]
+    public int Customerid { get; set; }
+
+    [Column("date")]
+    public DateOnly Date { get; set; }
+
+    [Column("status")]
+    [StringLength(50)]
+    public string Status { get; set; } = null!;
+
+    [Column("paymentmode")]
+    [StringLength(50)]
+    public string Paymentmode { get; set; } = null!;
+
+    [Column("rating")]
+    public int Rating { get; set; }
+
+    [Column("totalamount")]
+    public double Totalamount { get; set; }
+
+    [Column("createddate", TypeName = "timestamp without time zone")]
+    public DateTime Createddate { get; set; }
+
+    [Column("modifieddate", TypeName = "timestamp without time zone")]
+    public DateTime? Modifieddate { get; set; }
+
+    [Column("createdby")]
+    public int? Createdby { get; set; }
+
+    [Column("modifiedby")]
+    public int? Modifiedby { get; set; }
+
+    [Column("isdeleted")]
+    public bool Isdeleted { get; set; }
+
+    [ForeignKey("Createdby")]
+    [InverseProperty("CustomerorderCreatedbyNavigations")]
+    public virtual Userlogin? CreatedbyNavigation { get; set; }
+
+    [ForeignKey("Customerid")]
+    [InverseProperty("Customerorders")]
+    public virtual Customer Customer { get; set; } = null!;
+
+    [InverseProperty("Order")]
+    public virtual ICollection<Feedback> Feedbacks { get; } = new List<Feedback>();
+
+    [InverseProperty("Order")]
+    public virtual ICollection<Invoice> Invoices { get; } = new List<Invoice>();
+
+    [InverseProperty("Order")]
+    public virtual ICollection<Kot> Kots { get; } = new List<Kot>();
+
+    [ForeignKey("Modifiedby")]
+    [InverseProperty("CustomerorderModifiedbyNavigations")]
+    public virtual Userlogin? ModifiedbyNavigation { get; set; }
+
+    [InverseProperty("Order")]
+    public virtual ICollection<Orderdetail> Orderdetails { get; } = new List<Orderdetail>();
+
+    [InverseProperty("Order")]
+    public virtual ICollection<Ordertable> Ordertables { get; } = new List<Ordertable>();
+
+    [InverseProperty("Order")]
+    public virtual ICollection<Ordertax> Ordertaxes { get; } = new List<Ordertax>();
+}
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+
+namespace Entity.Models;
+
+[Table("ordertable")]
+public partial class Ordertable
+{
+    [Key]
+    [Column("ordertableid")]
+    public int Ordertableid { get; set; }
+
+    [Column("orderid")]
+    public int? Orderid { get; set; }
+
+    [Column("tableid")]
+    public int? Tableid { get; set; }
+
+    [Column("createddate", TypeName = "timestamp without time zone")]
+    public DateTime? Createddate { get; set; }
+
+    [Column("modifieddate", TypeName = "timestamp without time zone")]
+    public DateTime? Modifieddate { get; set; }
+
+    [Column("createdby")]
+    public int? Createdby { get; set; }
+
+    [Column("modifiedby")]
+    public int? Modifiedby { get; set; }
+
+    [Column("isdeleted")]
+    public bool? Isdeleted { get; set; }
+
+    [ForeignKey("Orderid")]
+    [InverseProperty("Ordertables")]
+    public virtual Customerorder? Order { get; set; }
+
+    [ForeignKey("Tableid")]
+    [InverseProperty("Ordertables")]
+    public virtual Dinetable? Table { get; set; }
+}using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+
+namespace Entity.Models;
+
+[Table("dinetable")]
+public partial class Dinetable
+{
+    [Key]
+    [Column("tableid")]
+    public int Tableid { get; set; }
+
+    [Column("sectionid")]
+    public int Sectionid { get; set; }
+
+    [Column("tablename")]
+    [StringLength(50)]
+    public string Tablename { get; set; } = null!;
+
+    [Column("capacity")]
+    public int Capacity { get; set; }
+
+    [Column("status", TypeName = "character varying")]
+    public string Status { get; set; } = null!;
+
+    [Column("createddate", TypeName = "timestamp without time zone")]
+    public DateTime Createddate { get; set; }
+
+    [Column("modifieddate", TypeName = "timestamp without time zone")]
+    public DateTime? Modifieddate { get; set; }
+
+    [Column("createdby")]
+    public int? Createdby { get; set; }
+
+    [Column("modifiedby")]
+    public int? Modifiedby { get; set; }
+
+    [Column("isdeleted")]
+    public bool Isdeleted { get; set; }
+
+    [ForeignKey("Createdby")]
+    [InverseProperty("DinetableCreatedbyNavigations")]
+    public virtual Userlogin? CreatedbyNavigation { get; set; }
+
+    [InverseProperty("Table")]
+    public virtual ICollection<Invoice> Invoices { get; } = new List<Invoice>();
+
+    [InverseProperty("Table")]
+    public virtual ICollection<Kot> Kots { get; } = new List<Kot>();
+
+    [ForeignKey("Modifiedby")]
+    [InverseProperty("DinetableModifiedbyNavigations")]
+    public virtual Userlogin? ModifiedbyNavigation { get; set; }
+
+    [InverseProperty("Table")]
+    public virtual ICollection<Ordertable> Ordertables { get; } = new List<Ordertable>();
+
+    [ForeignKey("Sectionid")]
+    [InverseProperty("Dinetables")]
+    public virtual Section Section { get; set; } = null!;
+}
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+
+namespace Entity.Models;
+
+[Table("ordertax")]
+public partial class Ordertax
+{
+    [Key]
+    [Column("ordertaxid")]
+    public int Ordertaxid { get; set; }
+
+    [Column("orderid")]
+    public int? Orderid { get; set; }
+
+    [Column("taxid")]
+    public int? Taxid { get; set; }
+
+    [Column("taxvalue")]
+    public double Taxvalue { get; set; }
+
+    [Column("createddate", TypeName = "timestamp without time zone")]
+    public DateTime Createddate { get; set; }
+
+    [Column("modifieddate", TypeName = "timestamp without time zone")]
+    public DateTime? Modifieddate { get; set; }
+
+    [Column("createdby")]
+    public int? Createdby { get; set; }
+
+    [Column("modifiedby")]
+    public int? Modifiedby { get; set; }
+
+    [Column("isdeleted")]
+    public bool Isdeleted { get; set; }
+
+    [ForeignKey("Createdby")]
+    [InverseProperty("OrdertaxCreatedbyNavigations")]
+    public virtual Userlogin? CreatedbyNavigation { get; set; }
+
+    [ForeignKey("Modifiedby")]
+    [InverseProperty("OrdertaxModifiedbyNavigations")]
+    public virtual Userlogin? ModifiedbyNavigation { get; set; }
+
+    [ForeignKey("Orderid")]
+    [InverseProperty("Ordertaxes")]
+    public virtual Customerorder? Order { get; set; }
+
+    [ForeignKey("Taxid")]
+    [InverseProperty("Ordertaxes")]
+    public virtual Tax? Tax { get; set; }
+}
+above are database models, below are view models namespace Entity.ViewModel;
+
+public class DinetableViewModel
+{
+    public int Tableid { get; set; }
+    public string Tablename { get; set; } = null!;
+    public int Capacity { get; set; }
+    public string Status { get; set; }
+    public int Sectionid { get; set; }
+}namespace Entity.ViewModel
+{
+    public class OrderDetailsViewModel
+    {
+        public int OrderId { get; set; }
+        public string InvoiceNumber { get; set; }
+        public string Status { get; set; }
+        public string PaymentMode { get; set; }
+        public DateTime PaidOn { get; set; }
+        public DateTime PlacedOn { get; set; }
+        public DateTime? ModifiedOn { get; set; }
+        public TimeSpan OrderDuration { get; set; }
+        public double TotalAmount { get; set; }
+        public double SubTotal { get; set; }
+        
+        public string CustomerName { get; set; }
+        public string Phone { get; set; }
+        public string Email { get; set; }
+        public int NumberOfPersons { get; set; }
+        
+        public string TableName { get; set; }
+        public string SectionName { get; set; }
+        
+        public List<OrderItemViewModel> OrderItems { get; set; }
+        
+        public List<OrderTaxViewModel> Taxes { get; set; }
+    }
+
+    public class OrderItemViewModel
+    {
+        public int SrNo { get; set; }
+        public string ItemName { get; set; }
+        public int Quantity { get; set; }
+        public double Price { get; set; }
+        public double TotalAmount { get; set; }
+        public string Status {get; set;}
+        public List<OrderItemModifierViewModel> Modifiers { get; set; }
+    }
+
+    public class OrderItemModifierViewModel
+    {
+        public string ModifierName { get; set; }
+        public int Quantity { get; set; }
+        public double Price { get; set; }
+        public double TotalAmount { get; set; }
+    }
+
+    public class OrderTaxViewModel
+    {
+        public string TaxName { get; set; }
+        public double TaxValue { get; set; }
+    }
+}namespace Entity.ViewModel
+{
+    public class SectionTablesViewModel
+    {
+        public SectionViewModel Section { get; set; }
+        public List<DinetableViewModel> Tables { get; set; }
+        public int AvailableCount => Tables.Count(t => t.Status == "Available");
+        public int AssignedCount => Tables.Count(t => t.Status == "Reserved");
+        public int RunningCount => Tables.Count(t => t.Status == "Occupied");
+    }
+}namespace Entity.ViewModel;
+
+public class SectionViewModel
+{
+    public int Sectionid { get; set; }
+    public string Sectionname { get; set; } = null!;
+    public string? Description { get; set; }
+    public DateTime Createddate { get; set; }
+    public DateTime? Modifieddate { get; set; }
+    public int? Createdby { get; set; }
+    public int? Modifiedby { get; set; }
+    public bool Isdeleted { get; set; }
+}
+namespace Entity.ViewModel;
+
+public class OrderViewModel
+{
+    public int OrderId { get; set; }
+    public DateTime Date { get; set; }
+    public string CustomerName { get; set; }
+    public string Status { get; set; }
+    public string PaymentMode { get; set; }
+    public int Rating { get; set; }
+    public double TotalAmount { get; set; }
+}
+    const deleteTokenModal= new bootstrap.Modal($('#tokenDeleteModal'));
+    $(document).ready(function () {
+    // Tab handling
+    $('.tab-item').on('click', function () {
+        // Remove active class from all tabs
+        $('.tab-item').removeClass('active');
+        
+        // Add active class to clicked tab
+        $(this).addClass('active');
+        
+        // Get section ID from data attribute
+        const sectionId = $(this).data('section');
+        
+        // Show/hide token sections
+        $('.section-tokens').hide();
+        $(`.section-tokens[data-section="${sectionId}"]`).show();
+    });
+    
+    $('.delete-btn').on('click', function () {
+        const tokenText = $(this).closest('tr').find('td:first-child strong').text();
+        const tokenId = parseInt(tokenText.replace('#', ''));
+        console.log(tokenId);
+        $('#tokenToDelete').val(tokenId);
+        deleteTokenModal.show();
+    });
+    
+    $('#confirmTokenDelete').on('click', function () {
+        const tokenId = $('#tokenToDelete').val();
+        console.log(tokenId);
+        $.ajax({
+            url: `/OrderApp/DeleteToken?tokenid=${tokenId}`,
+            type: 'POST',
+            success: function (response) {
+                if (response.success) {
+                    $(`tr:contains('#${tokenId}')`).remove();
+                    updateTabCounts();
+                    deleteTokenModal.hide();
+                }
+            },
+            error: function (error) {
+                console.error('Error:', error);
+            }
+        });
+    });
+    $('#waitingToken').on('shown.bs.modal', function () {
+        loadSections('#sectionSelect');
+    });
+    
+    // Email input change event for autofill functionality
+    $('#Email').on('input', function() {
+    const email = $(this).val().trim();
+    
+    // Validate email format before making the AJAX call
+    if (isValidEmail(email)) {
+        fetchCustomerData(email)
+
+;
+    } else {
+        // Clear fields if email is invalid
+        $('#Name').val('');
+        $('#MobileNo').val('');
+    }
+});
+
+// email validation function
+function isValidEmail(email)
+
+{
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email)
+;
+}
+
+// Fetch customer data only if email is valid
+function fetchCustomerData(email)
+
+ {
+    $.ajax({
+        url: '/Customer/GetCustomerByEmail',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ Email: email }),
+        success: function(customer) {
+            if (customer) {
+                $('#Name').val(customer.name);
+                $('#MobileNo').val(customer.phoneNumber);
+            }
+        },
+        error: function(xhr) {
+            console.error('Error:', xhr.responseText);
+        }
+    });
+} 
+    // Handle save token button click
+    $('#saveToken').on('click', function () {
+        const $form = $('#addTokenForm');
+        const email = $('#Email').val();
+        const name = $('#Name').val();
+        const mobileNo = $('#MobileNo').val();
+        const persons = $('#persons').val();
+        const sectionId = $('#sectionSelect').val();
+        
+        if (!email || !name || !mobileNo || !persons || !sectionId) {
+            return;
+        }
+        
+        const formData = {
+            Email: email,
+            Name: name,
+            MobileNumber: mobileNo,
+            NumberOfPersons: parseInt(persons),
+            SectionId: parseInt(sectionId)
+        };
+        
+        $.ajax({
+            url: '/OrderApp/AddWaitingToken',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function (result) {
+                if (result.success) {
+                    $('#waitingToken').modal('hide');
+                    $form[0].reset();
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 1000);
+                }
+            },
+            error: function (error) {
+                console.error('Error:', error);
+            }
+        });
+    });
+    
+    // Function to update tab counts
+    function updateTabCounts() {
+        $('.section-tokens').each(function () {
+            const count = $(this).find('tr').length;
+            const sectionId = $(this).data('section');
+            $(`.tab-item[data-section="${sectionId}"] .tab-count`).text(count);
+        });
+    }
+    const editTokenModal = new bootstrap.Modal($('#editWaitingToken'));
+    
+    // Edit button click handler
+    $('.edit-btn').on('click', function () {
+        const tokenText = $(this).closest('tr').find('td:first-child strong').text();
+        const tokenId = parseInt(tokenText.replace('#', ''));
+        const name = $(this).closest('tr').find('td:nth-child(4)').text();
+        const persons = $(this).closest('tr').find('td:nth-child(5)').text();
+        const phone = $(this).closest('tr').find('td:nth-child(6)').text();
+        const email = $(this).closest('tr').find('td:nth-child(7)').text();
+        
+        // Load sections first
+        loadSections('#editSectionSelect');
+        
+        // Populate the edit form
+        $('#editTokenId').val(tokenId);
+        $('#editEmail').val(email)
+;
+        $('#editName').val(name);
+        $('#editMobileNo').val(phone)
+;
+        $('#editPersons').val(persons);
+        
+        // Get current section ID from backend
+        $.ajax({
+            url: `/OrderApp/GetTokenDetails?tokenId=${tokenId}`,
+            type: 'GET',
+            success: function(token) {
+                if (token) {
+                    $('#editSectionSelect').val(token.sectionId);
+                }
+                editTokenModal.show();
+            },
+            error: function(xhr) {
+                console.error('Error fetching token details:', xhr.responseText);
+            }
+        });
+    });
+    
+    // Function to load sections into dropdown
+    function loadSections(selectId) {
+        $.ajax({
+            url: '/SectionsAndTables/GetAllSections',
+            type: 'GET',
+            dataType: 'json',
+            success: function (sections) {
+                const $select = $(selectId);
+                $select.empty();
+                
+                $.each(sections, function (index, section) {
+                    $select.append(new Option(section.sectionname, section.sectionid));
+                });
+            },
+            error: function (error) {
+                console.error('Error loading sections:', error);
+            }
+        });
+    }
+    
+    // Handle update token button click
+    $('#updateToken').on('click', function () {
+        const tokenId = $('#editTokenId').val();
+        const email = $('#editEmail').val();
+        const name = $('#editName').val();
+        const mobileNo = $('#editMobileNo').val();
+        const persons = $('#editPersons').val();
+        const sectionId = $('#editSectionSelect').val();
+        
+        if (!email || !name || !mobileNo || !persons || !sectionId) {
+            return;
+        }
+        
+        const formData = {
+            TokenId: parseInt(tokenId),
+            Email: email,
+            Name: name,
+            MobileNumber: mobileNo,
+            NumberOfPersons: parseInt(persons),
+            SectionId: parseInt(sectionId)
+        };
+        
+        $.ajax({
+            url: '/OrderApp/UpdateWaitingToken',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function (result) {
+                if (result.success) {
+                    editTokenModal.hide();
+                    
+                    // Update the row in the table without refreshing
+                    const $row = $(`tr:contains('#${tokenId}')`);
+                    $row.find('td:nth-child(4)').text(name);
+                    $row.find('td:nth-child(5)').text(persons);
+                    $row.find('td:nth-child(6)').text(mobileNo);
+                    window.location.reload();
+                }
+            },
+            error: function (error) {
+                console.error('Error:', error);
+            }
+        });
+    });
+    const assignTableModal = new bootstrap.Modal($('#assignTableModal'));
+    $('.assign-btn').on('click', function () {
+        const tokenRow = $(this).closest('tr');
+        const tokenText = tokenRow.find('td:first-child strong').text();
+        const tokenId = parseInt(tokenText.replace('#', ''));
+        const numberOfPersons = parseInt(tokenRow.find('td:nth-child(5)').text());
+        
+        $('#tokenToAssign').val(tokenId);
+        $('#requiredCapacity').val(numberOfPersons);
+        
+        loadSectionsForAssignment();
+        
+        assignTableModal.show();
+    });
+    
+    // Function to load sections for table assignment
+    function loadSectionsForAssignment() {
+        $.ajax({
+            url: '/SectionsAndTables/GetAllSections',
+            type: 'GET',
+            dataType: 'json',
+            success: function (sections) {
+                const $select = $('#sectionSelectForAssign');
+                $select.empty();
+                
+                $select.append(new Option('Select Section', ''));
+                
+                $.each(sections, function (index, section) {
+                    $select.append(new Option(section.sectionname, section.sectionid));
+                });
+                
+                $('#tableSelectForAssign').empty().append(new Option('Select Table', ''));
+            },
+            error: function (error) {
+                console.error('Error loading sections:', error);
+            }
+        });
+    }
+});
+
+    @model Entity.ViewModel.WaitingListViewModel
+@{
+    Layout = "~/Views/Shared/_OrderAppLayout.cshtml";
+    ViewData["Title"] = "WaitingList";
+}
+<style>
+    :root {
+        --primary: rgba(5, 101, 158, 255);
+        --light-gray: #f8f9fa;
+        --border-color: #dee2e6;
+        --text-muted: #6c757d;
+    }
+
+    body {
+        background-color: #f5f5f5;
+    }
+
+    / Main content container /
+    .container {
+        max-width: 1300px;
+        margin: 15px auto;
+        padding: 0 10px;
+    }
+
+    / Header area with Waiting List title and button /
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .header h1 {
+        color: var(--primary);
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 600;
+    }
+
+    .add-token-btn {
+        background-color: white;
+        border: 1px solid var(--primary);
+        color: var(--primary);
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .add-token-btn i {
+        margin-right: 8px;
+        font-size: 1.1rem;
+    }
+
+    .add-token-btn:hover {
+        background-color: var(--primary);
+        color: white;
+    }
+
+    .tab-container {
+        background-color: white;
+        border-radius: 6px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+
+    .tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border-color);
+        padding: 0;
+        margin: 0;
+        list-style-type: none;
+    }
+
+    .tab-item {
+        padding: 15px 25px;
+        cursor: pointer;
+        position: relative;
+        color: var(--text-muted);
+        font-weight: 500;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .tab-item.active {
+        color: var(--primary);
+        border-bottom: 3px solid var(--primary);
+    }
+
+    .tab-count {
+        background-color: #e9ecef;
+        color: var(--text-muted);
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-left: 10px;
+    }
+
+    / Table styles /
+    .table-container {
+        background-color: white;
+        border-radius: 6px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        background-color: #f8f9fa;
+        text-align: left;
+        padding: 15px 20px;
+        font-weight: 600;
+        color: #495057;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 1rem;
+    }
+
+    td {
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--border-color);
+        color: #212529;
+        font-size: 1rem;
+        vertical-align: middle;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tr:hover {
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+
+    .action-cell {
+        white-space: nowrap;
+    }
+
+    .action-btn {
+        color: var(--text-muted);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 6px;
+        margin: 0 5px;
+        font-size: 1.1rem;
+        transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+        transform: scale(1.1);
+    }
+
+    .edit-btn:hover {
+        color: #0d6efd;
+    }
+
+    .delete-btn:hover {
+        color: #dc3545;
+    }
+
+    .assign-btn:hover {
+        color: #198754;
+    }
+
+    .waiting-time {
+        color: #0d6efd;
+        font-weight: 600;
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+    }
+
+    #saveToken {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .form-floating>label {
+        padding-left: 1rem;
+    }
+
+    .form-floating>.form-control {
+        padding: 1rem 0.75rem;
+    }
+</style>
+<div class="container">
+    <div class="header">
+        <h1>Waiting List</h1>
+        <button class="add-token-btn" data-bs-toggle="modal" data-bs-target="#waitingToken">
+            <i class="fas fa-plus"></i> Waiting Token
+        </button>
+    </div>
+
+    <div class="tab-container">
+        <ul class="tabs">
+            @foreach (var sections in Model.Sections)
+            {
+                <li class="tab-item @(sections.SectionId == 0 ? "active" : "")" data-section="@sections.SectionId">
+                    @sections.SectionName
+                    <span class="tab-count">@sections.Tokens.Count</span>
+                </li>
+            }
+        </ul>
+    </div>
+
+    <div class="table-container">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>#Token No</th>
+                    <th>Created At</th>
+                    <th>Waiting Time</th>
+                    <th>Name</th>
+                    <th>No.of Persons</th>
+                    <th>Phone Number</th>
+                    <th>Email</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var sections in Model.Sections)
+                {
+                <tbody class="section-tokens" data-section="@sections.SectionId"
+                    style="display: @(sections.SectionId == 0 ? "table-row-group" : "none")">
+                        @foreach (var token in sections.Tokens)
+                        {
+                        <tr>
+                            <td><strong>#@token.TokenId</strong></td>
+                            <td>@token.CreatedAt.ToString("MMM dd, yyyy hh:mm tt")</td>
+                            <td class="waiting-time">@token.WaitingTime</td>
+                            <td>@token.Name</td>
+                            <td>@token.NumberOfPersons</td>
+                            <td>@token.PhoneNumber</td>
+                            <td>@token.Email</td>
+
+                            <td class="action-cell">
+                                <button class="action-btn edit-btn"><i class="fas fa-edit"></i></button>
+                                <button class="action-btn delete-btn"><i class="fas fa-trash"></i></button>
+                                <button class="action-btn assign-btn"><i class="fas fa-chair"></i></button </td>
+                        </tr>
+                        }
+                </tbody>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="modal fade" id="waitingToken" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Waiting Token Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="row">
-            <div class="alert alert-danger bg-white alert-primary col border-danger text-danger m-3" role="alert">
-                <img class="snackbar-icon" src="images/images/error-icon.svg" alt="">
-                This is an error message
+            <div class="modal-body">
+                <form id="addTokenForm">
+                    <div class="mb-3 form-floating">
+                        <input type="email" class="form-control" id="Email" name="Email">
+                        <label for="Email" class="form-label">Email*</label>
+                    </div>
+                    <div class="mb-3 form-floating">
+                        <input type="text" class="form-control" id="Name" name="Name">
+                        <label for="Name" class="form-label">Name*</label>
+                    </div>
+                    <div class="mb-3 form-floating">
+                        <input type="tel" class="form-control" id="MobileNo" name="MobileNo">
+                        <label for="MobileNo" class="form-label">Mobile Number*</label>
+                    </div>
+                    <div class="d-flex me-2">
+                        <div class="mb-3 col-6 form-floating">
+                            <input type="number" class="form-control" id="persons" name="persons" min="1">
+                            <label for="persons" class="form-label">No. of Person(s)*</label>
+                        </div>
+                        <div class="mb-3 ms-2 col-6 form-floating">
+                            <select class="form-select" id="sectionSelect" name="SectionId">
+                                <option value="">Loading sections...</option>
+                            </select>
+                            <label for="sectionSelect" class="form-label">Section*</label>
+                        </div>
+                    </div>
+                </form>
             </div>
-            <div class="alert alert-primary bg-white col border-info text-info m-3" role="alert">
-                <img class="snackbar-icon" src="images/images/info-icon.svg" alt="">
-                This is an information message!
+            <div class="modal-footer">
+                <button type="button" class="send-button px-3 py-1" id="saveToken">Save</button>
+                <button type="button" class="back-button px-3 py-1" data-bs-dismiss="modal">Cancel</button>
             </div>
-            </div>
-            <div class="row">
-                <div class="alert alert-danger bg-white alert-primary col border-warning text-warning m-3" role="alert">
-                    <img class="snackbar-icon" src="images/images/warning-icon.svg" alt="">
-                    This is a warning message!
-                </div>
-                <div class="alert alert-primary bg-white col border-success text-success m-3" role="alert">
-                    <img class="snackbar-icon" src="images/images/success-icon.svg" alt="">
-                    This is an sucess message!
-                </div>
-            </div>
-            <div class="row">
-                <div class="col column-title">call to action</div>
-            </div>
-            <button class="primary-btn">
-                Primary
-            </button>
-            <button class="secondary-btn m-3">
-                Secondary
-            </button>
-            <div class="row">
-                <div class="col column-title">Tabs</div>
-            </div>
-            <ul class="nav nav-pills">
-                <li><a href="#" class="text-decoration-none text-danger m-3"> Tab 1</a> </li>
-                <li><a href="#" class="text-decoration-none m-3">Tab 2</a></li>
-                <li><a href="#" class="text-decoration-none m-3">Tab 3</a></li>
-              </ul>
-            <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. 
-               Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it
-               to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. 
-               It was popularised in the 1960s with the release of Letraset sheets containing</p>
         </div>
+    </div>
+</div>
+<!-- Edit Modal -->
+<div class="modal fade" id="editWaitingToken" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Waiting Token</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editTokenForm">
+                    <input type="hidden" id="editTokenId" name="TokenId">
+                    <div class="mb-3 form-floating">
+                        <input type="email" class="form-control" id="editEmail" name="Email" disabled>
+                        <label for="editEmail" class="form-label">Email*</label>
+                    </div>
+                    <div class="mb-3 form-floating">
+                        <input type="text" class="form-control" id="editName" name="Name">
+                        <label for="editName" class="form-label">Name*</label>
+                    </div>
+                    <div class="mb-3 form-floating">
+                        <input type="tel" class="form-control" id="editMobileNo" name="MobileNo">
+                        <label for="editMobileNo" class="form-label">Mobile Number*</label>
+                    </div>
+                    <div class="d-flex me-2">
+                        <div class="mb-3 col-6 form-floating">
+                            <input type="number" class="form-control" id="editPersons" name="persons" min="1">
+                            <label for="editPersons" class="form-label">No. of Person(s)*</label>
+                        </div>
+                        <div class="mb-3 ms-2 col-6 form-floating">
+                            <select class="form-select" id="editSectionSelect" name="SectionId">
+                                <option value="">Loading sections...</option>
+                            </select>
+                            <label for="editSectionSelect" class="form-label">Section*</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="send-button px-3 py-1" id="updateToken">Update</button>
+                <button type="button" class="back-button px-3 py-1" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="tokenDeleteModal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancel Confirmation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="~/images/danger.png" width="50" height="50" alt="Warning">
+                <p class="mt-3">Are you sure you want to cancel the waiting token?</p>
+                <input type="hidden" id="tokenToDelete">
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="send-button px-3 py-1" id="confirmTokenDelete">Yes</button>
+                <button type="button" class="back-button px-3 py-1" data-bs-dismiss="modal">No</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="assignTableModal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Assign Table</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="assignTableForm">
+                    <input type="hidden" id="tokenToAssign">
+                    <input type="hidden" id="requiredCapacity">
+                    <div class="d-flex me-2">
+                    <div class="mb-3 col-6 form-floating">
+                        <select class="form-select" id="sectionSelectForAssign" name="SectionId">
+                            <option value="">Select Section</option>
+                        </select>
+                        <label for="sectionSelectForAssign" class="form-label">Section*</label>
+                    </div>
+                    <div class="mb-3 ms-2 col-6 form-floating">
+                        <select class="form-select" id="tableSelectForAssign" name="TableId">
+                            <option value="">Select Table</option>
+                        </select>
+                        <label for="tableSelectForAssign" class="form-label">Table*</label>
+                    </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="send-button px-3 py-1" id="confirmTokenAssign">Assign</button>
+                <button type="button" class="back-button px-3 py-1" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/js/waitinglist.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
