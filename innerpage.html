@@ -1,1289 +1,326 @@
-@model List<Entity.ViewModel.SectionTablesViewModel>
-@{
-    Layout = "~/Views/Shared/_OrderAppLayout.cshtml";
-    ViewData["Title"] = "Tables";
-}
-
-<div class="container-fluid mt-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="fs-4 mb-0">Table View</h2>
-        <div class="d-flex align-items-center">
-            <div class="status-indicators">
-                <div class="d-flex align-items-center"><span class="status-dot available-dot me-2"></span> Available
-                </div>
-                <div class="d-flex align-items-center"><span class="status-dot selected-dot me-2"></span> Selected</div>
-                <div class="d-flex align-items-center"><span class="status-dot assigned-dot me-2"></span> Assigned</div>
-                <div class="d-flex align-items-center"><span class="status-dot running-dot me-2"></span> Running</div>
-            </div>
-        </div>
-    </div>
-
-    @foreach (var sections in Model)
-    {
-        <div class="table-section">
-            <div class="section-header" data-bs-toggle="collapse" data-bs-target="#section-@sections.Section.Sectionid"
-                aria-expanded="true">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-chevron-down me-2"></i>
-                    <h3>@sections.Section.Sectionname</h3>
-                </div>
-                <div class="counts">
-                    <span class="d-flex align-items-center"><span class="status-dot available-dot me-2"></span>
-                        @sections.AvailableCount</span>
-                    <span class="d-flex align-items-center"><span class="status-dot assigned-dot me-2"></span>
-                        @sections.AssignedCount</span>
-                    <span class="d-flex align-items-center"><span class="status-dot running-dot me-2"></span>
-                        @sections.RunningCount</span>
-                    <button class="back-button px-3 py-2 token-btn ms-3" data-bs-toggle="modal"
-                        data-bs-target="#waitingToken">+ Waiting Token</button>
-                </div>
-            </div>
-            <div class="collapse show" id="section-@sections.Section.Sectionid">
-                <div class="section-content">
-                    <div class="row">
-                        @foreach (var table in sections.Tables)
-                        {
-                            @if (table.Status == "Occupied")
-                            {
-                                table.Status = "running";
-                            }
-                            else
-                            {
-                                if (table.Status == "Available")
-                                {
-                                    table.Status = "available";
-                                }
-                                else
-                                {
-                                    table.Status = "assigned";
-                                }
-                            }
-                            <div class="col-md-3 col-lg-2 col-sm-6 mb-3">
-                                <div class="table-card @table.Status">
-                                    <div class="ms-2 my-2 table-info">
-                                        <span class="table-number">@table.Tablename</span>
-                                        <span class="table-price">@(table.Status == "running" ? "" : "")</span>
-                                    </div>
-                                    <div class="mx-2 table-details">
-                                        <div class="people-count">
-                                            <i class="bi bi-people"></i>
-                                            <div>
-                                                @table.Capacity
-                                            </div>
-                                        </div>
-                                        <div class="time-info">
-                                            <i class="bi bi-clock"></i>
-                                            @if (table.Status == "running")
-                                            {
-                                                <div>
-                                                    @{
-                                                        if (table.ModifiedDate.HasValue)
-                                                        {
-                                                            TimeSpan diff = DateTime.Now - table.ModifiedDate.Value;
-                                                            @($"{diff.Hours} hours, {diff.Minutes} minutes, {diff.Seconds} seconds")
-                                                        }
-                                                    }
-                                                </div>
-                                            }
-                                            else
-                                            {
-                                                <div>0 min</div>
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                    <div class="d-flex justify-content-end">
-                        <button class="send-button px-3 py-2" data-bs-toggle="modal"
-                            data-bs-target="#assignTableModal">Assign</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
-</div>
-<div class="modal fade" id="waitingToken" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Waiting Token Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addSectionForm">
-                    <div class="mb-3 form-floating">
-                        <input type="text" class="form-control" id="Email" name="Email">
-                        <label for="Email" class="form-label">Email*</label>
-                    </div>
-                    <div class="mb-3 form-floating">
-                        <input type="text" class="form-control" id="Name" name="Name">
-                        <label for="Name" class="form-label">Name*</label>
-                    </div>
-                    <div class="mb-3 form-floating">
-                        <input type="text" class="form-control" id="MobileNo." name="MobileNo.">
-                        <label for="MobileNo." class="form-label">Mobile Number*</label>
-                    </div>
-                    <div class="d-flex me-2">
-                        <div class="mb-3 col-6 form-floating">
-                            <input type="text" class="form-control" id="persons" name="persons">
-                            <label for="tableCapacity" class="form-label">No. of Person(s)*</label>
-                        </div>
-                        <div class="mb-3 ms-2 col-6 form-floating">
-                            <select class="form-select" id="sectionSelect" name="SectionId">
-                                <option value="">Loading sections...</option>
-                            </select>
-                            <label for="sectionSelect" class="form-label">Section*</label>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="send-button px-3 py-1" id="saveToken">Save</button>
-                <button type="button" class="back-button px-3 py-1" data-bs-dismiss="modal">Cancel</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade modal-right" id="assignTableModal" tabindex="-1" aria-labelledby="assignTableModalLabel">
-    <div class="modal-dialog modal-dialog-right">
-        <div class="modal-content h-100">
-            <!-- No header, clean design as in the image -->
-            <div class="modal-body p-0">
-                <!-- Waiting List Section -->
-                <div class="waiting-list-section p-3">
-                    <h6 class="fw-bold mb-3">Waiting List</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm waiting-list-table">
-                            <thead>
-                                <tr>
-                                    <th width="10%"></th>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>No. of Persons</th>
-                                </tr>
-                            </thead>
-                            <tbody id="waitingListBody">
-                                <tr>
-                                    <td>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="selectedCustomer"
-                                                value="109">
-                                        </div>
-                                    </td>
-                                    <td>#109</td>
-                                    <td>Sarah</td>
-                                    <td>5</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Customer Details Section -->
-                <div class="customer-details-section p-3">
-                    <h6 class="fw-bold mb-3">Customer Details</h6>
-                    <form id="assignTableForm">
-                        <div class="mb-3">
-                            <label for="email" class="form-label small text-muted">Email*</label>
-                            <input type="email" class="form-control" id="email" name="email" value="sarah@example.com">
-                        </div>
-                        <div class="mb-3">
-                            <label for="name" class="form-label small text-muted">Name*</label>
-                            <input type="text" class="form-control" id="name" name="name" value="Sarah" >
-                        </div>
-                        <div class="mb-3">
-                            <label for="mobileNumber" class="form-label small text-muted">Mobile Number*</label>
-                            <input type="text" class="form-control" id="mobileNumber" name="mobileNumber"
-                                value="9980456858">
-                        </div>
-                        <div class="row">
-                            <div class="col-6 mb-3">
-                                <label for="personsCount" class="form-label small text-muted">No of Person(s)*</label>
-                                <input type="number" class="form-control" id="personsCount" name="personsCount"
-                                    value="5" >
-                            </div>
-                            <div class="col-6 mb-3">
-                                <label for="sectionSelect" class="form-label small text-muted">Section*</label>
-                                <select class="form-select" id="sectionSelect" name="sectionId">
-                                    <option value="1" selected>First Floor</option>
-                                    <option value="2">Ground Floor</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                            <button type="button" class="btn btn-primary" id="assignBtn">Assign</button>
-                            <button type="button" class="btn btn-outline-secondary"
-                                data-bs-dismiss="modal">Cancel</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<style>
-    body {
-        background-color: #f5f5f5;
-    }
-
-    .table-section {
-        background-color: white;
-        border-radius: 8px;
-        margin-bottom: 15px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-
-    .section-header {
-        cursor: pointer;
-        padding: 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #eee;
-    }
-
-    .section-header h3 {
-        margin: 0;
-        font-size: 1.2rem;
-        color: #0275d8;
-    }
-
-    .section-content {
-        padding: 15px;
-    }
-
-    .table-card {
-        border-radius: 8px;
-        margin-bottom: 10px;
-        min-height: 120px;
-    }
-
-    .available {
-        background-color: #e0e0e0;
-        border: 1px solid #bbb4b4;
-        ;
-    }
-
-    .selected {
-        background-color: #e8f5e9;
-        border: 1px solid #c8e6c9;
-    }
-
-    .assigned {
-        background-color: #e8f5e9;
-        border: 1px solid #c8e6c9;
-    }
-
-    .running {
-        background-color: #e3f2fd;
-        border: 1px solid #bbdefb;
-    }
-
-    .table-info {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 10px;
-    }
-
-    .table-number {
-        font-weight: bold;
-        font-size: 1.1rem;
-    }
-
-    .table-price {
-        color: #666;
-    }
-
-    .table-details {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 15px;
-    }
-
-    .people-count {
-        color: #666;
-    }
-
-    .time-info {
-        text-align: right;
-        font-size: 0.9rem;
-        color: #666;
-    }
-
-    .status-indicators {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-right: 10px;
-    }
-
-    .status-dot {
-        width: 15px;
-        height: 15px;
-        border-radius: 50%;
-        display: inline-block;
-    }
-
-    .available-dot {
-        background-color: #e0e0e0;
-    }
-
-    .selected-dot {
-        border: 2px solid #7cb342;
-        background-color: transparent;
-    }
-
-    .assigned-dot {
-        background-color: #7cb342;
-    }
-
-    .running-dot {
-        background-color: #2c8cdb;
-    }
-
-    .counts .bi-circle {
-        font-size: 0.8rem;
-        vertical-align: middle;
-    }
-
-    .count-badge {
-        background-color: #f5f5f5;
-        color: #666;
-        border-radius: 20px;
-        padding: 2px 8px;
-        font-size: 0.8rem;
-        margin-left: 5px;
-    }
-
-    .token-btn {
-        font-size: 0.8rem;
-        padding: 3px 8px;
-    }
-
-    .section-header .counts {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-
-    .modal-right .modal-dialog {
-        position: fixed;
-        margin: auto;
-        width: 500px auto;
-        /* Wider to match the image */
-        height: 100%;
-        right: -350px;
-        transform: translate3d(0%, 0, 0);
-    }
-
-    .modal-right .modal-content {
-        height: 100%;
-        overflow-y: auto;
-        border-radius: 0;
-        border: none;
-    }
-
-    .modal-right.show .modal-dialog {
-        right: 0;
-        transform: translate3d(0%, 0, 0);
-        transition: transform 0.3s ease-out;
-    }
-
-    .modal-dialog-right {
-        margin-right: 0;
-        margin-top: 0;
-    }
-
-    /* Customer details styling */
-    .waiting-list-section {
-        background-color: #fff;
-    }
-
-    .customer-details-section {
-        background-color: #fff;
-    }
-
-    .waiting-list-table th {
-        font-weight: normal;
-        color: #666;
-        border-top: none;
-    }
-
-    .waiting-list-table td,
-    .waiting-list-table th {
-        padding: 0.5rem;
-        vertical-align: middle;
-    }
-    /* Fix existing style syntax error */
-    .come-from-modal.right.fade.in .modal-dialog {
-        right: 0;
-    }
-</style>
-<script>
-    // Toggle chevron icon when collapsing/expanding sections
-    document.addEventListener('DOMContentLoaded', function () {
-        // Initialize all collapsible sections
-        var collapseTriggers = [].slice.call(document.querySelectorAll('[data-bs-toggle="collapse"]'));
-        collapseTriggers.forEach(function (trigger) {
-            trigger.addEventListener('click', function () {
-                var target = document.querySelector(trigger.getAttribute('data-bs-target'));
-                var chevron = trigger.querySelector('.bi');
-
-                if (target.classList.contains('show')) {
-                    chevron.classList.replace('bi-chevron-down', 'bi-chevron-right');
-                } else {
-                    chevron.classList.replace('bi-chevron-right', 'bi-chevron-down');
-                }
-            });
+document.addEventListener("DOMContentLoaded", function () {
+    // Toggle password visibility
+    const togglePassword = document.querySelector("#togglePassword");
+    const password = document.querySelector("#password");
+    
+    if (togglePassword != null) {
+        togglePassword.addEventListener("click", function () {
+            const type = password.getAttribute("type") === "password" ? "text" : "password";
+            password.setAttribute("type", type);
+            this.classList.toggle("bi-eye");
         });
-
-        // Handle Bootstrap collapse events
-        var collapseElements = [].slice.call(document.querySelectorAll('.collapse'));
-        collapseElements.forEach(function (element) {
-            element.addEventListener('shown.bs.collapse', function () {
-                var trigger = document.querySelector('[data-bs-target="#' + this.id + '"]');
-                trigger.querySelector('.bi').classList.replace('bi-chevron-right', 'bi-chevron-down');
-            });
-
-            element.addEventListener('hidden.bs.collapse', function () {
-                var trigger = document.querySelector('[data-bs-target="#' + this.id + '"]');
-                trigger.querySelector('.bi').classList.replace('bi-chevron-down', 'bi-chevron-right');
-            });
-        });
-    });
-    document.getElementById('waitingToken').addEventListener('shown.bs.modal', function () {
-        loadSections();
-        showToast('An error occurred while adding the token', 'error');
-    });
-    function loadSections() {
-        fetch('/SectionsAndTables/GetAllSections')
-            .then(response => response.json())
-            .then(sections => {
-                const select = document.getElementById('sectionSelect');
-                select.innerHTML = '';
-                sections.forEach(section => {
-                    const option = new Option(section.sectionname, section.sectionid);
-                    select.add(option);
-                });
-            });
     }
-    document.getElementById('saveToken').addEventListener('click', async function () {
-        const formData = {
-            Email: document.getElementById('Email').value,
-            Name: document.getElementById('Name').value,
-            MobileNumber: document.getElementById('MobileNo.').value,
-            NumberOfPersons: parseInt(document.getElementById('persons').value),
-            SectionId: parseInt(document.getElementById('sectionSelect').value)
-        };
 
-        try {
-            const response = await fetch('/OrderApp/AddWaitingToken', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+    if ($.validator) {
+        $('#loginform').validate({
+            rules: {
+                Email: {
+                    required: true,
+                    email: true
                 },
-                body: JSON.stringify(formData)
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                $('#waitingToken').modal('hide');
-                document.getElementById('addSectionForm').reset();
-                showToast('Token added successfully!', 'success');
-            } else {
-                showToast(result.message || 'Error adding token', 'error');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            showToast('An error occurred while adding the token', 'error');
-        }
-    });
-
-    function showToast(message, type) {
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-
-        setTimeout(() => toast.remove(), 3000);
-    }
-</script>
-const deleteTokenModal = new bootstrap.Modal($('#tokenDeleteModal'));
-$(document).ready(function () {
-    // Tab handling
-    $('.tab-item').on('click', function () {
-        // Remove active class from all tabs
-        $('.tab-item').removeClass('active');
-
-        // Add active class to clicked tab
-        $(this).addClass('active');
-
-        // Get section ID from data attribute
-        const sectionId = $(this).data('section');
-
-        // Show/hide token sections
-        $('.section-tokens').hide();
-        $(`.section-tokens[data-section="${sectionId}"]`).show();
-    });
-
-    $('.delete-btn').on('click', function () {
-        const tokenText = $(this).closest('tr').find('td:first-child strong').text();
-        const tokenId = parseInt(tokenText.replace('#', ''));
-        console.log(tokenId);
-        $('#tokenToDelete').val(tokenId);
-        deleteTokenModal.show();
-    });
-
-    $('#confirmTokenDelete').on('click', function () {
-        const tokenId = $('#tokenToDelete').val();
-        console.log(tokenId);
-        $.ajax({
-            url: `/OrderApp/DeleteToken?tokenid=${tokenId}`,
-            type: 'POST',
-            success: function (response) {
-                if (response.success) {
-                    $(`tr:contains('#${tokenId}')`).remove();
-                    updateTabCounts();
-                    deleteTokenModal.hide();
+                Password: {
+                    required: true,
+                    minlength: 8
                 }
             },
-            error: function (error) {
-                console.error('Error:', error);
-            }
-        });
-    });
-    $('#waitingToken').on('shown.bs.modal', function () {
-        loadSections('#sectionSelect');
-    });
-
-    // Email input change event for autofill functionality
-    $('#Email').on('input', function () {
-        const email = $(this).val().trim();
-
-        // Validate email format before making the AJAX call
-        if (isValidEmail(email)) {
-            fetchCustomerData(email)
-                ;
-        } else {
-            // Clear fields if email is invalid
-            $('#Name').val('');
-            $('#MobileNo').val('');
-        }
-    });
-
-    // email validation function
-    function isValidEmail(email) {
-        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return regex.test(email);
-    }
-
-    // Fetch customer data only if email is valid
-    function fetchCustomerData(email) {
-        $.ajax({
-            url: '/Customer/GetCustomerByEmail',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ Email: email }),
-            success: function (customer) {
-                if (customer) {
-                    $('#Name').val(customer.name);
-                    $('#MobileNo').val(customer.phoneNumber);
+            messages: {
+                Email: {
+                    required: "Email is required",
+                    email: "Please enter a valid email address"
+                },
+                Password: {
+                    required: "Password is required",
+                    minlength: "Password should be at least 8 characters"
                 }
-            },
-            error: function (xhr) {
-                console.error('Error:', xhr.responseText);
             }
         });
     }
-    // Handle save token button click
-    $('#saveToken').on('click', function () {
-        const $form = $('#addTokenForm');
-        const email = $('#Email').val();
-        const name = $('#Name').val();
-        const mobileNo = $('#MobileNo').val();
-        const persons = $('#persons').val();
-        const sectionId = $('#sectionSelect').val();
-
-        if (!email || !name || !mobileNo || !persons || !sectionId) {
-            return;
-        }
-
-        const formData = {
-            Email: email,
-            Name: name,
-            MobileNumber: mobileNo,
-            NumberOfPersons: parseInt(persons),
-            SectionId: parseInt(sectionId)
-        };
-
-        $.ajax({
-            url: '/OrderApp/AddWaitingToken',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(formData),
-            success: function (result) {
-                if (result.success) {
-                    $('#waitingToken').modal('hide');
-                    $form[0].reset();
-                    setTimeout(function () {
-                        window.location.reload();
-                    }, 1000);
-                }
-            },
-            error: function (error) {
-                console.error('Error:', error);
-            }
-        });
-    });
-
-    // Function to update tab counts
-    function updateTabCounts() {
-        $('.section-tokens').each(function () {
-            const count = $(this).find('tr').length;
-            const sectionId = $(this).data('section');
-            $(`.tab-item[data-section="${sectionId}"] .tab-count`).text(count);
-        });
-    }
-    const editTokenModal = new bootstrap.Modal($('#editWaitingToken'));
-
-    // Edit button click handler
-    $('.edit-btn').on('click', function () {
-        const tokenText = $(this).closest('tr').find('td:first-child strong').text();
-        const tokenId = parseInt(tokenText.replace('#', ''));
-        const name = $(this).closest('tr').find('td:nth-child(4)').text();
-        const persons = $(this).closest('tr').find('td:nth-child(5)').text();
-        const phone = $(this).closest('tr').find('td:nth-child(6)').text();
-        const email = $(this).closest('tr').find('td:nth-child(7)').text();
-
-        // Load sections first
-        loadSections('#editSectionSelect');
-
-        // Populate the edit form
-        $('#editTokenId').val(tokenId);
-        $('#editEmail').val(email);
-        $('#editName').val(name);
-        $('#editMobileNo').val(phone);
-        $('#editPersons').val(persons);
-
-        // Get current section ID from backend
-        $.ajax({
-            url: `/OrderApp/GetTokenDetails?tokenId=${tokenId}`,
-            type: 'GET',
-            success: function (token) {
-                if (token) {
-                    $('#editSectionSelect').val(token.sectionId);
-                }
-                editTokenModal.show();
-            },
-            error: function (xhr) {
-                console.error('Error fetching token details:', xhr.responseText);
-            }
-        });
-    });
-
-    // Function to load sections into dropdown
-    function loadSections(selectId) {
-        $.ajax({
-            url: '/SectionsAndTables/GetAllSections',
-            type: 'GET',
-            dataType: 'json',
-            success: function (sections) {
-                const $select = $(selectId);
-                $select.empty();
-
-                $.each(sections, function (index, section) {
-                    $select.append(new Option(section.sectionname, section.sectionid));
-                });
-            },
-            error: function (error) {
-                console.error('Error loading sections:', error);
-            }
-        });
-    }
-
-    // Handle update token button click
-    $('#updateToken').on('click', function () {
-        const tokenId = $('#editTokenId').val();
-        const email = $('#editEmail').val();
-        const name = $('#editName').val();
-        const mobileNo = $('#editMobileNo').val();
-        const persons = $('#editPersons').val();
-        const sectionId = $('#editSectionSelect').val();
-
-        if (!email || !name || !mobileNo || !persons || !sectionId) {
-            return;
-        }
-
-        const formData = {
-            TokenId: parseInt(tokenId),
-            Email: email,
-            Name: name,
-            MobileNumber: mobileNo,
-            NumberOfPersons: parseInt(persons),
-            SectionId: parseInt(sectionId)
-        };
-
-        $.ajax({
-            url: '/OrderApp/UpdateWaitingToken',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(formData),
-            success: function (result) {
-                if (result.success) {
-                    editTokenModal.hide();
-
-                    // Update the row in the table without refreshing
-                    const $row = $(`tr:contains('#${tokenId}')`);
-                    $row.find('td:nth-child(4)').text(name);
-                    $row.find('td:nth-child(5)').text(persons);
-                    $row.find('td:nth-child(6)').text(mobileNo);
-                    window.location.reload();
-                }
-            },
-            error: function (error) {
-                console.error('Error:', error);
-            }
-        });
-    });
-    const assignTableModal = new bootstrap.Modal($('#assignTableModal'));
-    let selectedTables = [];
-
-    $('.assign-btn').on('click', function () {
-        const tokenRow = $(this).closest('tr');
-        const tokenId = parseInt(tokenRow.find('td:first-child strong').text().replace('#', ''));
-        const requiredCapacity = parseInt(tokenRow.find('td:nth-child(5)').text());
-
-        $('#tokenToAssign').val(tokenId);
-        $('#requiredCapacity').text(requiredCapacity);
-        selectedTables = [];
-        updateSelectedTablesUI();
-        loadSectionsForAssignment();
-        assignTableModal.show();
-    });
-
-    function loadSectionsForAssignment() {
-        $.ajax({
-            url: '/SectionsAndTables/GetAllSections',
-            type: 'GET',
-            success: function (sections) {
-                const $select = $('#sectionSelectForAssign');
-                $select.empty().append('<option value="">Select Section</option>');
-                sections.forEach(s => $select.append(new Option(s.sectionname, s.sectionid)));
-            }
-        });
-    }
-
-    $('#sectionSelectForAssign').on('change', function () {
-        const sectionId = $(this).val();
-        if (!sectionId) return;
-
-        $.ajax({
-            url: `/OrderApp/GetAvailableTables?sectionId=${sectionId}`,
-            type: 'GET',
-            success: function (tables) {
-                const $container = $('#tablesContainer');
-                $container.empty();
-
-                tables.forEach(table => {
-                    const isSelected = selectedTables.some(t => t.tableId === table.tableId);
-                    $container.append(`
-                    <div class="form-check">
-                        <input type="checkbox" class="form-check-input table-checkbox" 
-                            id="table-${table.tableId}" 
-                            value="${table.tableId}" 
-                            data-capacity="${table.capacity}"
-                            ${isSelected ? 'checked' : ''}>
-                        <label class="form-check-label" for="table-${table.tableId}">
-                            ${table.tableName} (Capacity: ${table.capacity})
-                        </label>
-                    </div>
-                `);
-                });
-            }
-        });
-    });
-
-    $('#tablesContainer').on('change', '.table-checkbox', function () {
-        const tableId = parseInt($(this).val());
-        const capacity = parseInt($(this).data('capacity'));
-
-        if ($(this).is(':checked')) {
-            selectedTables.push({ tableId, capacity });
-        } else {
-            selectedTables = selectedTables.filter(t => t.tableId !== tableId);
-        }
-
-        updateSelectedTablesUI();
-    });
-
-    function updateSelectedTablesUI() {
-        const totalCapacity = selectedTables.reduce((sum, table) => sum + table.capacity, 0);
-        $('#selectedCapacity').text(totalCapacity);
-        $('#selectedTablesCount').text(selectedTables.length);
-    }
-
-    $('#confirmAssign').on('click', function () {
-        const tokenId = $('#tokenToAssign').val();
-        const requiredCapacity = parseInt($('#requiredCapacity').text());
-        const selectedCapacity = parseInt($('#selectedCapacity').text());
-
-        if (selectedTables.length === 0) {
-            console.log();
-            alert('Please select at least one table');
-            return;
-        }
-
-        if (selectedCapacity < requiredCapacity) {
-            if (!confirm(`Selected capacity (${selectedCapacity}) is less than required (${requiredCapacity}). Continue anyway?`)) {
-                return;
-            }
-        }
-        $.ajax({
-            url: '/OrderApp/AssignTablesToToken',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                TokenId: parseInt(tokenId),
-                TableIds: selectedTables.map(t => t.tableId),
-                RequiredCapacity: requiredCapacity
-            }),
-            success: function (response) {
-                if (response.success) {
-                    assignTableModal.hide();
-                    $(`tr:contains('#${tokenId}')`).remove();
-                    updateTabCounts();
-                }
-            },
-            error: function (xhr) {
-                alert('Error: ' + xhr.responseJSON?.message || 'Failed to assign tables');
-            }
-        });
-    });
+    $('#tempMessage').delay(2000).fadeOut(1000);
 });
 
-@model Entity.ViewModel.WaitingListViewModel
-@{
-    Layout = "~/Views/Shared/_OrderAppLayout.cshtml";
-    ViewData["Title"] = "WaitingList";
+function isValidEmail(email) {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
 }
-<style>
-    :root {
-        --primary: rgba(5, 101, 158, 255);
-        --light-gray: #f8f9fa;
-        --border-color: #dee2e6;
-        --text-muted: #6c757d;
-    }
 
-    body {
-        background-color: #f5f5f5;
+function navigateToForgotPassword() {
+    let email = document.getElementById('Email').value;
+    
+    // Get the base URL for the forgot password page
+    var forgotPasswordUrl = '/Home/ForgotPassword';
+    console.log(email.length);
+    if (email.length > 0) {
+        window.location.href = forgotPasswordUrl + '?email=' + encodeURIComponent(email);
+    } else {
+        window.location.href = forgotPasswordUrl;
     }
+}using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authentication;
+using Service.Interfaces;
+using Entity.ViewModel;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
-    /* Main content container */
-    .container {
-        max-width: 1300px;
-        margin: 15px auto;
-        padding: 0 10px;
-    }
+namespace Web.Controllers
+{
+    public class HomeController : Controller
+    {
+        private readonly IAuthService _authService;
+        private readonly IConfiguration _config;
 
-    /* Header area with Waiting List title and button */
-    .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
+        public HomeController(IAuthService authService, IConfiguration config)
+        {
+            _authService = authService;
+            _config = config;
+        }
 
-    .header h1 {
-        color: var(--primary);
-        margin: 0;
-        font-size: 2rem;
-        font-weight: 600;
-    }
-
-    .add-token-btn {
-        background-color: white;
-        border: 1px solid var(--primary);
-        color: var(--primary);
-        padding: 10px 20px;
-        border-radius: 4px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        font-size: 1rem;
-        font-weight: 500;
-    }
-
-    .add-token-btn i {
-        margin-right: 8px;
-        font-size: 1.1rem;
-    }
-
-    .add-token-btn:hover {
-        background-color: var(--primary);
-        color: white;
-    }
-
-    .tab-container {
-        background-color: white;
-        border-radius: 6px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-        overflow: hidden;
-    }
-
-    .tabs {
-        display: flex;
-        border-bottom: 1px solid var(--border-color);
-        padding: 0;
-        margin: 0;
-        list-style-type: none;
-    }
-
-    .tab-item {
-        padding: 15px 25px;
-        cursor: pointer;
-        position: relative;
-        color: var(--text-muted);
-        font-weight: 500;
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-    }
-
-    .tab-item.active {
-        color: var(--primary);
-        border-bottom: 3px solid var(--primary);
-    }
-
-    .tab-count {
-        background-color: #e9ecef;
-        color: var(--text-muted);
-        border-radius: 50%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px;
-        height: 24px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        margin-left: 10px;
-    }
-
-    /* Table styles */
-    .table-container {
-        background-color: white;
-        border-radius: 6px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        overflow: auto;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    th {
-        background-color: #f8f9fa;
-        text-align: left;
-        padding: 15px 20px;
-        font-weight: 600;
-        color: #495057;
-        border-bottom: 1px solid var(--border-color);
-        font-size: 1rem;
-    }
-
-    td {
-        padding: 15px 20px;
-        border-bottom: 1px solid var(--border-color);
-        color: #212529;
-        font-size: 1rem;
-        vertical-align: middle;
-    }
-
-    tr:last-child td {
-        border-bottom: none;
-    }
-
-    tr:hover {
-        background-color: rgba(13, 110, 253, 0.05);
-    }
-
-    .action-cell {
-        white-space: nowrap;
-    }
-
-    .action-btn {
-        color: var(--text-muted);
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 6px;
-        margin: 0 5px;
-        font-size: 1.1rem;
-        transition: all 0.2s;
-    }
-
-    .action-btn:hover {
-        transform: scale(1.1);
-    }
-
-    .edit-btn:hover {
-        color: #0d6efd;
-    }
-
-    .delete-btn:hover {
-        color: #dc3545;
-    }
-
-    .assign-btn:hover {
-        color: #198754;
-    }
-
-    .waiting-time {
-        color: #0d6efd;
-        font-weight: 600;
-    }
-
-    .modal-header {
-        border-bottom: 1px solid #dee2e6;
-        background-color: #f8f9fa;
-    }
-
-    .modal-footer {
-        border-top: 1px solid #dee2e6;
-        background-color: #f8f9fa;
-    }
-
-    #saveToken {
-        background-color: var(--primary);
-        border-color: var(--primary);
-    }
-
-    .form-floating>label {
-        padding-left: 1rem;
-    }
-
-    .form-floating>.form-control {
-        padding: 1rem 0.75rem;
-    }
-</style>
-<div class="container">
-    <div class="header">
-        <h1>Waiting List</h1>
-        <button class="add-token-btn" data-bs-toggle="modal" data-bs-target="#waitingToken">
-            <i class="fas fa-plus"></i> Waiting Token
-        </button>
-    </div>
-
-    <div class="tab-container">
-        <ul class="tabs">
-            @foreach (var sections in Model.Sections)
+        public IActionResult Index()
+        {
+            if (Request.Cookies["Email"] != null)
             {
-                <li class="tab-item @(sections.SectionId == 0 ? "active" : "")" data-section="@sections.SectionId">
-                    @sections.SectionName
-                    <span class="tab-count">@sections.Tokens.Count</span>
-                </li>
+                return RedirectToAction("Users", "Main");
             }
-        </ul>
-    </div>
+            return View();
+        }
 
-    <div class="table-container">
-        <table class="table table-hover mb-0">
-            <thead>
-                <tr>
-                    <th>#Token No</th>
-                    <th>Created At</th>
-                    <th>Waiting Time</th>
-                    <th>Name</th>
-                    <th>No.of Persons</th>
-                    <th>Phone Number</th>
-                    <th>Email</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var sections in Model.Sections)
+        [HttpPost]
+        public async Task<IActionResult> Login(UserDemo model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View("Index", model);
+            }
+
+            bool success = await _authService.LoginAsync(model.Email, model.Password);
+            if (!success)
+            {
+                TempData["Message"] = "Invalid Credentials";
+                return View("Index", model);
+            }
+
+            string userRole = await _authService.GetRoleByEmailAsync(model.Email);
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new Claim[]
                 {
-                <tbody class="section-tokens" data-section="@sections.SectionId"
-                    style="display: @(sections.SectionId == 0 ? "table-row-group" : "none")">
-                        @foreach (var token in sections.Tokens)
-                        {
-                        <tr>
-                            <td><strong>#@token.TokenId</strong></td>
-                            <td>@token.CreatedAt.ToString("MMM dd, yyyy hh:mm tt")</td>
-                            <td class="waiting-time">@token.WaitingTime</td>
-                            <td>@token.Name</td>
-                            <td>@token.NumberOfPersons</td>
-                            <td>@token.PhoneNumber</td>
-                            <td>@token.Email</td>
+                    new Claim(ClaimTypes.Name, model.Email),
+                    new Claim(ClaimTypes.Email, model.Email),
+                    new Claim(ClaimTypes.Role, userRole)
+                }),
+                Expires = DateTime.UtcNow.AddHours(1),
+                Issuer = _config["Jwt:Issuer"],
+                Audience = _config["Jwt:Audience"],
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(key),
+                    SecurityAlgorithms.HmacSha256Signature)
+            };
 
-                            <td class="action-cell">
-                                <button class="action-btn edit-btn"><i class="fas fa-edit"></i></button>
-                                <button class="action-btn delete-btn"><i class="fas fa-trash"></i></button>
-                                <button class="action-btn assign-btn"><i class="fas fa-chair"></i></button </td>
-                        </tr>
-                        }
-                </tbody>
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            string tokenString = tokenHandler.WriteToken(token);
+
+            HttpContext.Session.SetString("Token", tokenString);
+            HttpContext.Session.SetString("Email", model.Email);
+            HttpContext.Session.SetString("Role", userRole);
+
+            var cookieOptions = new CookieOptions()
+            {
+                Expires = DateTime.Now.AddDays(30),
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict
+            };
+
+            Response.Cookies.Append("Jwt", tokenString, cookieOptions);
+
+            if (model.IsRemember)
+            {
+                Response.Cookies.Append("Email", model.Email, cookieOptions);
+            }
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, model.Email),
+                new Claim(ClaimTypes.Role, userRole)
+            };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                new AuthenticationProperties
+                {
+                    IsPersistent = model.IsRemember,
+                    ExpiresUtc = model.IsRemember ? DateTime.UtcNow.AddDays(30) : null
+                });
+
+            return RedirectToAction("Users", "Main");
+        }
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+        public async Task<IActionResult> ForgotPassword(string email)
+        {
+            var vm = new UserEmail();
+            if (!string.IsNullOrEmpty(email))
+            {
+                vm.Email = email;
+            }
+            return View(vm);
+        }
+        [HttpPost]
+        public async Task<IActionResult> SendEmailLink(UserEmail model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View("ForgotPassword", model);
+            }
+
+            try
+            {
+                bool isEmailSent = await _authService.SendPasswordResetEmailAsync(model.Email);
+                if (isEmailSent)
+                {
+                    TempData["SuccessMessage"] = "Password reset link has been sent to your email.";
+                    return RedirectToAction("Index", "Home");
                 }
-            </tbody>
-        </table>
-    </div>
-</div>
-<div class="modal fade" id="waitingToken" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Waiting Token Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addTokenForm">
-                    <div class="mb-3 form-floating">
-                        <input type="email" class="form-control" id="Email" name="Email">
-                        <label for="Email" class="form-label">Email*</label>
-                    </div>
-                    <div class="mb-3 form-floating">
-                        <input type="text" class="form-control" id="Name" name="Name">
-                        <label for="Name" class="form-label">Name*</label>
-                    </div>
-                    <div class="mb-3 form-floating">
-                        <input type="tel" class="form-control" id="MobileNo" name="MobileNo">
-                        <label for="MobileNo" class="form-label">Mobile Number*</label>
-                    </div>
-                    <div class="d-flex me-2">
-                        <div class="mb-3 col-6 form-floating">
-                            <input type="number" class="form-control" id="persons" name="persons" min="1">
-                            <label for="persons" class="form-label">No. of Person(s)*</label>
-                        </div>
-                        <div class="mb-3 ms-2 col-6 form-floating">
-                            <select class="form-select" id="sectionSelect" name="SectionId">
-                                <option value="">Loading sections...</option>
-                            </select>
-                            <label for="sectionSelect" class="form-label">Section*</label>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="send-button px-3 py-1" id="saveToken">Save</button>
-                <button type="button" class="back-button px-3 py-1" data-bs-dismiss="modal">Cancel</button>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Edit Modal -->
-<div class="modal fade" id="editWaitingToken" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Waiting Token</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editTokenForm">
-                    <input type="hidden" id="editTokenId" name="TokenId">
-                    <div class="mb-3 form-floating">
-                        <input type="email" class="form-control" id="editEmail" name="Email" disabled>
-                        <label for="editEmail" class="form-label">Email*</label>
-                    </div>
-                    <div class="mb-3 form-floating">
-                        <input type="text" class="form-control" id="editName" name="Name">
-                        <label for="editName" class="form-label">Name*</label>
-                    </div>
-                    <div class="mb-3 form-floating">
-                        <input type="tel" class="form-control" id="editMobileNo" name="MobileNo">
-                        <label for="editMobileNo" class="form-label">Mobile Number*</label>
-                    </div>
-                    <div class="d-flex me-2">
-                        <div class="mb-3 col-6 form-floating">
-                            <input type="number" class="form-control" id="editPersons" name="persons" min="1">
-                            <label for="editPersons" class="form-label">No. of Person(s)*</label>
-                        </div>
-                        <div class="mb-3 ms-2 col-6 form-floating">
-                            <select class="form-select" id="editSectionSelect" name="SectionId">
-                                <option value="">Loading sections...</option>
-                            </select>
-                            <label for="editSectionSelect" class="form-label">Section*</label>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="send-button px-3 py-1" id="updateToken">Update</button>
-                <button type="button" class="back-button px-3 py-1" data-bs-dismiss="modal">Cancel</button>
-            </div>
-        </div>
-    </div>
-</div>
-<div id="tokenDeleteModal" class="modal fade" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Cancel Confirmation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center">
-                <img src="~/images/danger.png" width="50" height="50" alt="Warning">
-                <p class="mt-3">Are you sure you want to cancel the waiting token?</p>
-                <input type="hidden" id="tokenToDelete">
-            </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="send-button px-3 py-1" id="confirmTokenDelete">Yes</button>
-                <button type="button" class="back-button px-3 py-1" data-bs-dismiss="modal">No</button>
-            </div>
-        </div>
-    </div>
-</div>
+                else
+                {
+                    ModelState.AddModelError("Email", "No account found with this email address.");
+                    return View("ForgotPassword", model);
+                }
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "An error occurred while processing your request. Please try again later.");
+                return View("ForgotPassword", model);
+            }
+        }
 
-<div id="assignTableModal" class="modal fade" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Assign Tables</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row mb-3">
-                    <input type="hidden" id="tokenToAssign">
-                    <div class="col-md-6">
-                        <label class="form-label">Required Capacity:</label>
-                        <strong id="requiredCapacity">0</strong>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <span class="me-3">Selected: <strong id="selectedTablesCount">0</strong> tables</span>
-                        <span>Capacity: <strong id="selectedCapacity">0</strong></span>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-4">
-                        <select class="form-select" id="sectionSelectForAssign">
-                            <option value="">Select Section</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="row mt-3">
-                    <div class="col-md-12">
-                        <div id="tablesContainer" class="table-container" style="max-height: 300px; overflow-y: auto;">
-                            <p class="text-muted text-center">Please select a section to view available tables</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirmAssign">Assign Tables</button>
+
+        [HttpGet]
+        public IActionResult ResetPassword(string email)
+        {
+            return View(new ResetPasswordModel { Email = email });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var userExists = await _authService.IsUserExistsAsync(model.Email);
+            if (!userExists)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            await _authService.ResetPasswordAsync(model.Email, model.NewPassword);
+
+            return RedirectToAction("Index", "Home");
+        }
+    }
+}@model Entity.ViewModel.UserEmail
+@{
+    ViewData["Title"] = "Forgot Password Page";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="row d-flex justify-content-center align-items-center">
+    <img class="col" src="~/images/logos/pizzashop_logo.png" height="70px" width="70px">
+    <div class="col fs-2 pizza-shop-header">
+        PIZZASHOP
+    </div>
+</div>
+<form asp-controller="Home" asp-action="SendEmailLink" method="post" class="row" id="forgotPasswordForm">
+    <div class="row w-100">
+        <p class="col fs-3 welcome-text mx-8 my-1">Forgot Password</p>
+    </div>
+    <div class="row w-100">
+        <P class="col mx-8 my-1 recover-text"> enter your email and we'll send you a link to reset your password.</P>
+    </div>
+    <div class="row w-100">
+        <input type="text" placeholder="Email" asp-for="Email" class="icon-email col mx-8 my-2">
+    </div>
+    <div class="row w-100">
+        <span asp-validation-for="Email" class="text-danger col mx-8"></span>
+    </div>
+    <div class="row d-flex w-100">
+        <button class="send-button col mx-8 my-2" type="submit">Send</button>
+    </div>
+    <div class="row w-100">
+        <div class="col d-flex w-100 justify-content-center align-items-center my-2">
+            <a class="row text-decoration-none" asp-controller="Home" asp-action="Index">
+                Back to Login
+            </a>
+        </div>
+    </div>
+</form>
+@section Scripts {
+    <script>
+        // Prevent validation from showing on page load
+        $(document).ready(function() {
+            // Reset validation state
+            $("form").removeData("validator");
+            $("form").removeData("unobtrusiveValidation");
+            $.validator.unobtrusive.parse("form");
+            
+            // Only show validation after first interaction
+            $("form").on("submit", function() {
+                $(this).validate();
+            });
+        });
+    </script>
+}@model Entity.ViewModel.UserDemo
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="row d-flex justify-content-center align-items-center">
+    <img class="col" src="~/images/logos/pizzashop_logo.png" height="70px" width="70px">
+    <div class="col fs-2 pizza-shop-header">
+        PIZZASHOP
+    </div>
+</div>
+<div class="row w-100 p-0">
+    <p class="col fs-3 welcome-text mx-8 my-1 p-0">Welcome,</p>
+</div>
+<form asp-controller="Home" asp-action="login" method="post" class="row" id=loginform>
+    <div class="row w-100 ">
+        <div class="col mx-8 my-2 p-0 w-100">
+            <input type="email" asp-for="Email" id="Email" name="Email" placeholder="Email" class="icon-email w-100">
+        </div>
+    </div>
+
+    <div class="row w-100">
+        <div class="col mx-8 my-2 position-relative w-100 p-0">
+            <input type="password" asp-for="Password" placeholder="Password" name="Password"
+                class="icon-password col w-100 align-items-center" id="password">
+            <i class="bi bi-eye-slash" id="togglePassword"></i>
+            <div><strong class="text-danger" id="tempMessage">@TempData["Message"]</strong></div>
+        </div>
+    </div>
+    <div class="row w-100 d-flex align-items-center justify-content-center my-3">
+        <div class="form-check col mx-8 d-flex">
+            <input type="checkbox" asp-for="IsRemember" class="form-check-input row" id="exampleCheck1">
+            <label class="form-check-label row mx-3 " for="exampleCheck1" asp-for="IsRemember">Remember Me</label>
+            <div class="col forgot-password-div">
+                <a class="forgot-password-link" onclick="navigateToForgotPassword()">Forgot Password?</a>
             </div>
         </div>
     </div>
-</div>
-<script src="~/js/waitinglist.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
-<script
-    src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+    <div class="row w-100">
+        <button type="submit" class="login-button col mx-8 my-2">Login</button>
+    </div>
+</form>
+<script src="~/js/site.js"></script>
