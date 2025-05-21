@@ -1,1801 +1,1299 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const firstCategory = document.querySelector('#categoryList .list-group-item');
-    if (firstCategory) {
-        firstCategory.classList.add('active-category');
-        const categoryId = firstCategory.dataset.categoryId;
-        loadItems(categoryId);
-    }
-    document.getElementById('searchItem').addEventListener('input', function () {
-        currentSearchTerm = this.value;
-        loadItems(currentCategoryId, 1, currentSearchTerm);
-    });
 
-    document.querySelector('.page-size-select').addEventListener('change', function () {
-        itemPageSize = parseInt(this.value);
-        loadItems(currentCategoryId, 1, currentSearchTerm);
-    });
-
-    document.querySelector('.prev-page').addEventListener('click', function () {
-        if (currentItemPage > 1) {
-            loadItems(currentCategoryId, currentItemPage - 1, currentSearchTerm);
-        }
-    });
-
-    document.querySelector('.next-page').addEventListener('click', function () {
-        const totalPages = Math.ceil(totalItems / itemPageSize);
-        if (currentItemPage < totalPages) {
-            loadItems(currentCategoryId, currentItemPage + 1, currentSearchTerm);
-        }
-    });
-    document.getElementById('searchModifier').addEventListener('input', function () {
-        currentModifierSearchTermMain = this.value;
-        loadModifiers(currentModifierGroupIdMain, 1, currentModifierSearchTermMain);
-    });
-
-    document.querySelector('.modifier-page-size-select').addEventListener('change', function () {
-        modifierPageSizeMain = parseInt(this.value);
-        loadModifiers(currentModifierGroupIdMain, 1, currentModifierSearchTermMain);
-    });
-
-    document.querySelector('.modifier-prev-page').addEventListener('click', function () {
-        if (currentModifierPageMain > 1) {
-            loadModifiers(currentModifierGroupIdMain, currentModifierPageMain - 1, currentModifierSearchTermMain);
-        }
-    });
-
-    document.querySelector('.modifier-next-page').addEventListener('click', function () {
-        const totalPages = Math.ceil(totalModifiersMain / modifierPageSizeMain);
-        if (currentModifierPageMain < totalPages) {
-            loadModifiers(currentModifierGroupIdMain, currentModifierPageMain + 1, currentModifierSearchTermMain);
-        }
-    });
-});
-
-document.getElementById('categoryList').addEventListener('click', function (e) {
-    const categoryItem = e.target.closest('.category-item');
-    if (categoryItem) {
-        document.querySelectorAll('#categoryList .category-item').forEach(item => {
-            item.classList.remove('active-category');
-        });
-        categoryItem.classList.add('active-category');
-        const categoryId = categoryItem.dataset.categoryId;
-        loadItems(categoryId);
-    }
-});
-
-let currentCategoryId = null;
-let currentItemPage = 1;
-let itemPageSize = 5;
-let totalItems = 0;
-let currentSearchTerm = '';
-let currentModifierGroupIdMain = null;
-let currentModifierPageMain = 1;
-let modifierPageSizeMain = 10;
-let totalModifiersMain = 0;
-let currentModifierSearchTermMain = '';
-function loadItems(categoryId, page = 1, searchTerm = '') {
-    if (!categoryId) return;
-
-    currentCategoryId = categoryId;
-    currentItemPage = page;
-    currentSearchTerm = searchTerm || '';
-
-    fetch(`/Menu/GetItems?categoryId=${categoryId}&page=${page}&pageSize=${itemPageSize}&searchTerm=${encodeURIComponent(searchTerm)}`)
-        .then(response => response.json())
-        .then(data => {
-            const tbody = document.querySelector('#itemsTable tbody');
-            tbody.innerHTML = '';
-
-            totalItems = data.totalItems;
-
-            // Update pagination info
-            updatePaginationInfo();
-
-            if (data.items.length === 0) {
-                tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="text-center">No items found</td>
-                </tr>
-            `;
-                return;
-            }
-
-            data.items.forEach(item => {
-                const imageHtml = item.itemImage
-                    ? `<img src="${item.itemImage}" class="item-thumbnail me-2 rounded-circle" alt="${item.itemName}" style="width: 40px; height: 35px;">`
-                    : '';
-
-                var itemtype = item.itemType;
-                let itemtypesrc = "/images/icons/";
-                if (itemtype == "Vegetarian") {
-                    itemtypesrc += "veg-icon.svg";
-                }
-                else if (itemtype == "Vegan") {
-                    itemtypesrc += "vegan-icon.svg";
-                }
-                else {
-                    itemtypesrc += "non-veg-icon.svg";
-                }
-
-                const itemtypeHtml = `<img src="${itemtypesrc}" class="me-2 rounded-circle" alt="" style="width: 40px; height: 35px;">`;
-
-                const row = `
-                <tr>
-                    <td><input class="form-check-input item-checkbox" type="checkbox" data-item-id="${item.itemId}"></td>
-                    <td class="align-middle">
-                        <div class="d-flex align-items-center">
-                            ${imageHtml}
-                            <span>${item.itemName}</span>
-                        </div>
-                    </td>
-                    <td class="align-middle"><div class="d-flex">${itemtypeHtml}</div></td>
-                    <td class="align-middle">${item.rate}</td>
-                    <td class="align-middle">${item.quantity}</td>
-                    <td class="align-middle">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" onclick="return false" type="checkbox" ${item.available ? 'checked' : ''}>
-                        </div>
-                    </td>
-                    <td class="align-middle">
-                        <i class="material-icons cursor-pointer" onclick="editItem(${item.itemId})">edit</i>
-                        <i class="material-icons cursor-pointer" onclick="deleteItem(${item.itemId})">delete</i>
-                    </td>
-                </tr>
-            `;
-                tbody.insertAdjacentHTML('beforeend', row);
-            });
-        });
-}
-
-function updatePaginationInfo() {
-    const startItem = Math.min((currentItemPage - 1) * itemPageSize + 1, totalItems);
-    const endItem = Math.min(currentItemPage * itemPageSize, totalItems);
-    const totalPages = Math.ceil(totalItems / itemPageSize);
-
-    document.querySelector('.showing-info').textContent = `Showing ${startItem} - ${endItem} of ${totalItems}`;
-
-    document.querySelector('.prev-page').disabled = currentItemPage <= 1;
-    document.querySelector('.next-page').disabled = currentItemPage >= totalPages;
-}
-$(document).ready(function () {
-    // Common validation settings
-    $.validator.setDefaults({
-        errorElement: 'div',
-        errorPlacement: function (error, element) {
-            // Custom error placement for floating labels
-            if (element.parent('.form-floating').length) {
-                error.appendTo(element.parent());
-            } else if (element.hasClass('form-check-input')) {
-                error.appendTo(element.closest('.form-check'));
-            } else {
-                error.appendTo(element);
-            }
-            error.addClass('text-danger');
-        }
-    });
-    $(document).ready(function () {
-        // Reset validation errors when any modal is hidden
-        $('.modal').on('hidden.bs.modal', function () {
-            const forms = $(this).find('form');
-
-            forms.each(function () {
-                const validator = $(this).validate();
-                if (validator) {
-                    // Reset the form validation
-                    validator.resetForm();
-                }
-
-                // Remove validation styling classes
-                $(this).find('.is-invalid').removeClass('is-invalid');
-                $(this).find('.text-danger').remove();
-            });
-        });
-    });
-    // Add Category Form Validation
-    $("#addCategoryForm").validate({
-        rules: {
-            categoryName: {
-                required: true,
-                minlength: 2,
-                maxlength: 50
-            }
-        },
-        messages: {
-            categoryName: {
-                required: "Please enter a category name",
-                minlength: "Category name must be at least 2 characters",
-                maxlength: "Category name cannot exceed 50 characters"
-            }
-        }
-    });
-
-    $("#saveCategory").click(function () {
-        if ($("#addCategoryForm").valid()) {
-            const categoryName = $("#categoryName").val();
-            const categoryDescription = $("#categoryDescription").val();
-
-            fetch('/Menu/AddCategory', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    categoryName: categoryName,
-                    description: categoryDescription
-                })
-            })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.reload();
-                    } else {
-                        alert('Failed to add category');
-                    }
-                });
-        }
-    });
-
-    $("#editCategoryForm").validate({
-        rules: {
-            editCategoryName: {
-                required: true,
-                minlength: 2,
-                maxlength: 50
-            }
-        },
-        messages: {
-            editCategoryName: {
-                required: "Please enter a category name",
-                minlength: "Category name must be at least 2 characters",
-                maxlength: "Category name cannot exceed 50 characters"
-            }
-        }
-    });
-
-    $("#updateCategory").click(function () {
-        if ($("#editCategoryForm").valid()) {
-            const categoryId = $("#editCategoryId").val();
-            const categoryName = $("#editCategoryName").val();
-            const categoryDescription = $("#editCategoryDescription").val();
-
-            fetch('/Menu/UpdateCategory', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    categoryId: categoryId,
-                    categoryName: categoryName,
-                    description: categoryDescription
-                })
-            })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.reload();
-                    } else {
-                        alert('Failed to update category');
-                    }
-                });
-        }
-    });
-    $("#addModifierGroupForm").validate({
-        rules: {
-            modifierGroupName: {
-                required: true,
-                minlength: 2,
-                maxlength: 50
-            }
-        },
-        messages: {
-            modifierGroupName: {
-                required: "Please enter a modifier group name",
-                minlength: "Modifier group name must be at least 2 characters",
-                maxlength: "Modifier group name cannot exceed 50 characters"
-            }
-        }
-    });
-
-    $("#saveModifierGroup").click(function () {
-        if ($("#addModifierGroupForm").valid()) {
-            const groupName = $("#modifierGroupName").val();
-            const groupDescription = $("#modifierGroupDescription").val();
-
-            fetch('/Menu/AddModifierGroup', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    modifierGroupName: groupName,
-                    description: groupDescription
-                })
-            })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.reload();
-                    } else {
-                        alert('Failed to add modifier group');
-                    }
-                });
-        }
-    });
-
-    // Edit Modifier Group Form Validation
-    $("#editModifierGroupForm").validate({
-        rules: {
-            editModifierGroupName: {
-                required: true,
-                minlength: 2,
-                maxlength: 50
-            }
-        },
-        messages: {
-            editModifierGroupName: {
-                required: "Please enter a modifier group name",
-                minlength: "Modifier group name must be at least 2 characters",
-                maxlength: "Modifier group name cannot exceed 50 characters"
-            }
-        }
-    });
-
-    $("#updateModifierGroup").click(function () {
-        if ($("#editModifierGroupForm").valid()) {
-            const groupId = $("#editModifierGroupId").val();
-            const groupName = $("#editModifierGroupName").val();
-            const groupDescription = $("#editModifierGroupDescription").val();
-
-            // Get current modifiers from the container
-            const modifiers = [];
-            $("#currentModifiersContainer .badge").each(function () {
-                modifiers.push($(this).data('modifier-id'));
-            });
-
-            fetch('/Menu/UpdateModifierGroup', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    modifierGroupId: groupId,
-                    modifierGroupName: groupName,
-                    description: groupDescription,
-                    modifiers: modifiers
-                })
-            })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.reload();
-                    } else {
-                        alert('Failed to update modifier group');
-                    }
-                });
-        }
-    });
-    $("#addModifierForm").validate({
-        rules: {
-            modifierGroup: {
-                required: true
-            },
-            modifierName: {
-                required: true,
-                minlength: 2,
-                maxlength: 50
-            },
-            modifierUnit: {
-                required: true
-            },
-            modifierRate: {
-                required: true,
-                number: true,
-                min: 0
-            },
-            modifierQuantity: {
-                required: true,
-                digits: true,
-                min: 0
-            }
-        },
-        messages: {
-            modifierGroup: {
-                required: "Please select a modifier group"
-            },
-            modifierName: {
-                required: "Please enter a modifier name",
-                minlength: "Modifier name must be at least 2 characters",
-                maxlength: "Modifier name cannot exceed 50 characters"
-            },
-            modifierUnit: {
-                required: "Please enter a unit"
-            },
-            modifierRate: {
-                required: "Please enter a rate",
-                number: "Please enter a valid number",
-                min: "Rate cannot be negative"
-            },
-            modifierQuantity: {
-                required: "Please enter a quantity",
-                digits: "Please enter a whole number",
-                min: "Quantity cannot be negative"
-            }
-        }
-    });
-
-    $("#saveModifier").click(function () {
-        if ($("#addModifierForm").valid()) {
-            const groupId = $("#modifierGroup").val();
-            const name = $("#modifierName").val();
-            const unit = $("#modifierUnit").val();
-            const rate = $("#modifierRate").val();
-            const quantity = $("#modifierQuantity").val();
-            const description = $("#modifierDescription").val();
-
-            fetch('/Menu/AddModifier', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    modifierGroupId: groupId,
-                    modifierName: name,
-                    unit: unit,
-                    rate: rate,
-                    quantity: quantity,
-                    description: description
-                })
-            })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.reload();
-                    } else {
-                        alert('Failed to add modifier');
-                    }
-                });
-        }
-    });
-
-    // Edit Modifier Form Validation
-    $("#editModifierForm").validate({
-        rules: {
-            editModifierGroup: {
-                required: true
-            },
-            editModifierName: {
-                required: true,
-                minlength: 2,
-                maxlength: 50
-            },
-            editModifierUnit: {
-                required: true
-            },
-            editModifierRate: {
-                required: true,
-                number: true,
-                min: 0
-            },
-            editModifierQuantity: {
-                required: true,
-                digits: true,
-                min: 0
-            }
-        },
-        messages: {
-            editModifierGroup: {
-                required: "Please select a modifier group"
-            },
-            editModifierName: {
-                required: "Please enter a modifier name",
-                minlength: "Modifier name must be at least 2 characters",
-                maxlength: "Modifier name cannot exceed 50 characters"
-            },
-            editModifierUnit: {
-                required: "Please enter a unit"
-            },
-            editModifierRate: {
-                required: "Please enter a rate",
-                number: "Please enter a valid number",
-                min: "Rate cannot be negative"
-            },
-            editModifierQuantity: {
-                required: "Please enter a quantity",
-                digits: "Please enter a whole number",
-                min: "Quantity cannot be negative"
-            }
-        }
-    });
-
-    // Update modifier button
-    $("#updateModifier").click(function () {
-        if ($("#editModifierForm").valid()) {
-            const modifierId = $("#editModifierId").val();
-            const groupId = $("#editModifierGroup").val();
-            const name = $("#editModifierName").val();
-            const unit = $("#editModifierUnit").val();
-            const rate = $("#editModifierRate").val();
-            const quantity = $("#editModifierQuantity").val();
-            const description = $("#editModifierDescription").val();
-
-            fetch('/Menu/UpdateModifier', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    modifierId: modifierId,
-                    modifierGroupId: groupId,
-                    modifierName: name,
-                    unit: unit,
-                    rate: rate,
-                    quantity: quantity,
-                    description: description
-                })
-            })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.reload();
-                    } else {
-                        alert('Failed to update modifier');
-                    }
-                });
-        }
-    });
-    // Add Item Form Validation
-    $("#addItemForm").validate({
-        rules: {
-            CategoryId: {
-                required: true
-            },
-            ItemName: {
-                required: true,
-                minlength: 2,
-                maxlength: 50
-            },
-            ItemType: {
-                required: true
-            },
-            Rate: {
-                required: true,
-                number: true,
-                min: 0
-            },
-            Quantity: {
-                required: true,
-                digits: true,
-                min: 0
-            },
-            Unit: {
-                required: true
-            },
-            TaxPercentage: {
-                number: true,
-                min: 0,
-                max: 100
-            },
-            Shortcode: {
-                maxlength: 5
-            }
-        },
-        messages: {
-            CategoryId: {
-                required: "Please select a category"
-            },
-            ItemName: {
-                required: "Please enter an item name",
-                minlength: "Item name must be at least 2 characters",
-                maxlength: "Item name cannot exceed 50 characters"
-            },
-            Rate: {
-                required: "Please enter a rate",
-                number: "Please enter a valid number",
-                min: "Rate cannot be negative"
-            },
-            Quantity: {
-                required: "Please enter a quantity",
-                digits: "Please enter a whole number",
-                min: "Quantity cannot be negative"
-            },
-            TaxPercentage: {
-                number: "Please enter a valid percentage",
-                min: "Tax percentage cannot be negative",
-                max: "Tax percentage cannot exceed 100%"
-            },
-            Shortcode: {
-                maxlength: "short code cannot exceed 5 characters",
-            }
-        },
-        submitHandler: function (form) {
-            // Create FormData object from the form
-            const formData = new FormData(form);
-
-            // Add checkbox values explicitly
-            formData.set('Available', $("#available").prop('checked') ? "true" : "false");
-            formData.set('IsDefaultTax', $("#defaultTax").prop('checked') ? "true" : "false");
-
-            // Add modifier groups
-            const groupElements = document.querySelectorAll('#modifierGroupsContainer [data-group-id]');
-
-            groupElements.forEach((groupEl, index) => {
-                const groupId = groupEl.dataset.groupId;
-                const minSelect = groupEl.querySelector('[name*="MinSelect"]').value;
-                const maxSelect = groupEl.querySelector('[name*="MaxSelect"]').value;
-
-                formData.append(`ModifierGroups[${index}].ModifierGroupId`, groupId);
-                formData.append(`ModifierGroups[${index}].MinSelect`, minSelect);
-                formData.append(`ModifierGroups[${index}].MaxSelect`, maxSelect);
-            });
-
-            fetch('/Menu/AddItem', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => {
-                    if (response.ok) {
-                        closeAllModals();
-                        document.location.reload();
-                    } else {
-                        return response.text().then(text => {
-                            throw new Error(text);
-                        });
-                    }
-                })
-                .catch(error => {
-                    alert('Error saving item: ' + error.message);
-                });
-
-            return false;
-        }
-    });
-
-    $("#editItemForm").validate({
-        rules: {
-            CategoryId: {
-                required: true
-            },
-            ItemName: {
-                required: true,
-                minlength: 2,
-                maxlength: 50
-            },
-            ItemType: {
-                required: true
-            },
-            Rate: {
-                required: true,
-                number: true,
-                min: 0
-            },
-            Quantity: {
-                required: true,
-                digits: true,
-                min: 0
-            },
-            Unit: {
-                required: true
-            },
-            TaxPercentage: {
-                number: true,
-                min: 0,
-                max: 100
-            },
-            Shortcode: {
-                maxlength: 5
-            }
-        },
-        messages: {
-            CategoryId: {
-                required: "Please select a category"
-            },
-            ItemName: {
-                required: "Please enter an item name",
-                minlength: "Item name must be at least 2 characters",
-                maxlength: "Item name cannot exceed 50 characters"
-            },
-            Rate: {
-                required: "Please enter a rate",
-                number: "Please enter a valid number",
-                min: "Rate cannot be negative"
-            },
-            Quantity: {
-                required: "Please enter a quantity",
-                digits: "Please enter a whole number",
-                min: "Quantity cannot be negative"
-            },
-            TaxPercentage: {
-                number: "Please enter a valid percentage",
-                min: "Tax percentage cannot be negative",
-                max: "Tax percentage cannot exceed 100%"
-            },
-            Shortcode: {
-                maxlength: "short code cannot exceed 5 characters",
-            }
-        },
-        submitHandler: function (form) {
-            const formData = new FormData(form);
-
-            // Add checkbox values explicitly
-            formData.set('Available', $("#editAvailable").prop('checked') ? "true" : "false");
-            formData.set('IsDefaultTax', $("#editDefaultTax").prop('checked') ? "true" : "false");
-
-            // Add modifier groups from edit modal
-            const groupElements = document.querySelectorAll('#editModifierGroupsContainer [data-group-id]');
-
-            groupElements.forEach((groupEl, index) => {
-                const groupId = groupEl.dataset.groupId;
-                const minSelect = groupEl.querySelector('[name*="MinSelect"]').value;
-                const maxSelect = groupEl.querySelector('[name*="MaxSelect"]').value;
-
-                formData.append(`ModifierGroups[${index}].ModifierGroupId`, groupId);
-                formData.append(`ModifierGroups[${index}].MinSelect`, minSelect);
-                formData.append(`ModifierGroups[${index}].MaxSelect`, maxSelect);
-            });
-
-            fetch('/Menu/UpdateItem', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => {
-                    if (response.ok) {
-                        closeAllModals();
-                        document.location.reload();
-                    } else {
-                        return response.text().then(text => {
-                            throw new Error(text);
-                        });
-                    }
-                })
-                .catch(error => {
-                    alert('Error updating item: ' + error.message);
-                });
-
-            return false; // Prevent default form submission
-        }
-    });
-});
-// Load modifier groups when modal opens
-document.getElementById('addModifierModal').addEventListener('shown.bs.modal', function () {
-    fetch('/Menu/GetModifierGroups')
-        .then(response => response.json())
-        .then(data => {
-            const select = document.getElementById('modifierGroup');
-            select.innerHTML = '<option value="">Select a group</option>';
-            data.forEach(group => {
-                const option = document.createElement('option');
-                option.value = group.modifierGroupId;
-                option.textContent = group.modifierGroupName;
-                select.appendChild(option);
-            });
-        });
-});
-// Load dynamic data when modal opens
-document.getElementById('addItemModal').addEventListener('shown.bs.modal', function () {
-    loadCategoriesInAddItem();
-    loadModifierGroupsInAddItem();
-});
-
-// Load categories in additem
-function loadCategoriesInAddItem() {
-    fetch('/Menu/GetCategories')
-        .then(response => response.json())
-        .then(categories => {
-            const select = document.getElementById('categorySelect');
-            select.innerHTML = '<option value="">Select Category</option>';
-            categories.forEach(category => {
-                const option = new Option(category.categoryName, category.categoryId);
-                select.add(option);
-            });
-        });
-}
-
-// Load modifier groups in additem
-function loadModifierGroupsInAddItem() {
-    fetch('/Menu/GetModifierGroups')
-        .then(response => response.json())
-        .then(groups => {
-            const select = document.getElementById('modifierGroupSelect');
-            select.innerHTML = '<option value="">Select Modifier Group</option>';
-            groups.forEach(group => {
-                const option = new Option(group.modifierGroupName, group.modifierGroupId);
-                select.add(option);
-            });
-        });
-}
-
-// Handle modifier group selection
-document.getElementById('modifierGroupSelect').addEventListener('change', async function () {
-    const groupId = this.value;
-    if (groupId) {
-        // Get modifier group details including modifiers
-        const response = await fetch(`/Menu/GetModifiersById?modifierGroupId=${groupId}`);
-        const modifiers = await response.json();
-
-        const groupName = this.options[this.selectedIndex].text;
-
-        await addModifierGroupRow(groupId, groupName, modifiers.length);
-
-        showModifiersForGroup(groupId, modifiers);
-
-        this.value = '';
-    }
-});
-
-// Show modifiers for a selected group
-function showModifiersForGroup(groupId, modifiers) {
-    const container = document.getElementById('modifierGroupsContainer');
-    const groupRow = container.querySelector(`[data-group-id="${groupId}"]`);
-
-    if (!groupRow) return;
-
-    // Create modifiers list
-    const modifiersList = document.createElement('div');
-    modifiersList.className = 'modifiers-list mt-2';
-    modifiersList.innerHTML = `
-    <h6>Modifiers:</h6>
-    <ul class="list-group">
-        ${modifiers.map(mod =>
-        `<li class="list-group-item py-1"><div class="d-flex justify-content-between">${mod.modifierName} ${mod.rate}</div></li>`
-    ).join('')}
-    </ul>
-`;
-
-    // Append after the group row
-    groupRow.appendChild(modifiersList);
-}
-
-// Add modifier group row with min/max dropdowns
-function addModifierGroupRow(groupId, groupName, modifierCount) {
-    const container = document.getElementById('modifierGroupsContainer');
-    const existingGroup = container.querySelector(`[data-group-id="${groupId}"]`);
-    if (existingGroup) return;
-
-    // Create min and max options based on modifier count
-    const minOptions = Array.from({ length: modifierCount + 1 }, (_, i) =>
-        `<option value="${i}">${i}</option>`).join('');
-
-    const maxOptions = Array.from({ length: modifierCount + 1 }, (_, i) =>
-        `<option value="${i}" ${i === modifierCount ? 'selected' : ''}>${i}</option>`).join('');
-
-    const row = document.createElement('div');
-    row.className = 'row mb-2 align-items-center border-bottom pb-2';
-    row.dataset.groupId = groupId;
-    row.innerHTML = `
-    <div class="col-6">
-        <input type="hidden" name="ModifierGroups[${groupId}].ModifierGroupId" value="${groupId}">
-        <strong>${groupName}</strong>
-    </div>
-    <div class="col-6 text-end">
-        <button type="button" class="btn btn-sm btn-danger" onclick="this.closest('[data-group-id]').remove()">
-            <i class="material-icons">delete</i>
-        </button>
-    </div>
-    <div class="col-md-6 mt-2">
-        <label class="form-label">Min Select</label>
-        <select class="form-select" name="ModifierGroups[${groupId}].MinSelect" required>
-            ${minOptions}
-        </select>
-    </div>
-    <div class="col-md-6 mt-2">
-        <label class="form-label">Max Select</label>
-        <select class="form-select" name="ModifierGroups[${groupId}].MaxSelect" required>
-            ${maxOptions}
-        </select>
-    </div>
-`;
-    container.appendChild(row);
-}
-
-// Image upload handling
-document.getElementById('itemImage').addEventListener('change', function (e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            document.getElementById('imagePreview').innerHTML = `
-            <img src="${e.target.result}" class="img-thumbnail" style="max-height: 150px;">
-        `;
-            document.getElementById('removeImage').style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-    }
-});
-
-document.getElementById('removeImage').addEventListener('click', function () {
-    document.getElementById('itemImage').value = '';
-    document.getElementById('imagePreview').innerHTML = '';
-    this.style.display = 'none';
-});
-// Function to open edit modal with item data
-function editItem(itemId) {
-    // First load categories and modifier groups
-    loadCategoriesInEditItem();
-    loadModifierGroupsInEditItem();
-
-    fetch(`/Menu/GetItem?id=${itemId}`)
-        .then(response => response.json())
-        .then(item => {
-            document.getElementById('editItemId').value = item.itemId;
-            document.getElementById('editItemName').value = item.itemName;
-            document.getElementById('editRate').value = item.rate;
-            document.getElementById('editQuantity').value = item.quantity;
-            document.getElementById('editTaxPercentage').value = item.taxPercentage;
-            document.getElementById('editShortCode').value = item.shortcode;
-            document.getElementById('editDescription').value = item.description;
-
-            // Set select values
-            document.getElementById('editCategorySelect').value = item.categoryId;
-            document.getElementById('editItemType').value = item.itemType;
-            document.getElementById('editUnit').value = item.unit;
-
-            // Set checkboxes
-            document.getElementById('editAvailable').checked = item.available;
-            document.getElementById('editDefaultTax').checked = item.isDefaultTax;
-
-            // Set image preview if exists
-            if (item.itemImage) {
-                document.getElementById('editImagePreview').innerHTML = `
-                <img src="${item.itemImage}" class="img-thumbnail" style="max-height: 150px;">
-            `;
-                document.getElementById('editRemoveImage').style.display = 'block';
-            }
-
-            loadItemModifierGroups(itemId);
-
-            new bootstrap.Modal(document.getElementById('editItemModal')).show();
-        });
-}
-
-// Load categories for edit modal
-function loadCategoriesInEditItem() {
-    fetch('/Menu/GetCategories')
-        .then(response => response.json())
-        .then(categories => {
-            const select = document.getElementById('editCategorySelect');
-            select.innerHTML = '<option value="">Select Category</option>';
-            categories.forEach(category => {
-                const option = new Option(category.categoryName, category.categoryId);
-                select.add(option);
-            });
-        });
-}
-
-// Load modifier groups for edit modal
-function loadModifierGroupsInEditItem() {
-    fetch('/Menu/GetModifierGroups')
-        .then(response => response.json())
-        .then(groups => {
-            const select = document.getElementById('editModifierGroupSelect');
-            select.innerHTML = '<option value="">Select Modifier Group</option>';
-            groups.forEach(group => {
-                const option = new Option(group.modifierGroupName, group.modifierGroupId);
-                select.add(option);
-            });
-        });
-}
-
-// Load item's modifier groups
-function loadItemModifierGroups(itemId) {
-    fetch(`/Menu/GetItemModifierGroups?itemId=${itemId}`)
-        .then(response => response.json())
-        .then(groups => {
-            const container = document.getElementById('editModifierGroupsContainer');
-            container.innerHTML = '';
-
-            groups.forEach(group => {
-                addEditModifierGroupRow(
-                    group.modifierGroupId,
-                    group.modifierGroupName,
-                    group.minSelect,
-                    group.maxSelect
-                );
-            });
-        });
-}
-
-// Add modifier group row to edit modal
-function addEditModifierGroupRow(groupId, groupName, minSelect, maxSelect) {
-    const container = document.getElementById('editModifierGroupsContainer');
-    const existingGroup = container.querySelector(`[data-group-id="${groupId}"]`);
-    if (existingGroup) return;
-
-    const row = document.createElement('div');
-    row.className = 'row mb-2 align-items-center border-bottom pb-2';
-    row.dataset.groupId = groupId;
-    row.innerHTML = `
-    <div class="col-6">
-        <input type="hidden" name="ModifierGroups[${groupId}].ModifierGroupId" value="${groupId}">
-        <strong>${groupName}</strong>
-    </div>
-    <div class="col-6 text-end">
-        <button type="button" class="btn btn-sm btn-danger" onclick="this.closest('[data-group-id]').remove()">
-            <i class="material-icons">delete</i>
-        </button>
-    </div>
-    <div class="col-md-6 mt-2">
-        <label class="form-label">Min Select</label>
-        <select class="form-select" name="ModifierGroups[${groupId}].MinSelect" required>
-            ${Array.from({ length: 11 }, (_, i) =>
-        `<option value="${i}" ${i == minSelect ? 'selected' : ''}>${i}</option>`
-    ).join('')}
-        </select>
-    </div>
-    <div class="col-md-6 mt-2">
-        <label class="form-label">Max Select</label>
-        <select class="form-select" name="ModifierGroups[${groupId}].MaxSelect" required>
-            ${Array.from({ length: 11 }, (_, i) =>
-        `<option value="${i}" ${i == maxSelect ? 'selected' : ''}>${i}</option>`
-    ).join('')}
-        </select>
-    </div>
-`;
-    container.appendChild(row);
-}
-
-document.getElementById('editModifierGroupSelect').addEventListener('change', async function () {
-    const groupId = this.value;
-    if (groupId) {
-        const response = await fetch(`/Menu/GetModifiersById?modifierGroupId=${groupId}`);
-        const modifiers = await response.json();
-        const groupName = this.options[this.selectedIndex].text;
-
-        addEditModifierGroupRow(groupId, groupName, 0, modifiers.length);
-        editShowModifiersForGroup()
-        this.value = '';
-    }
-});
-function editShowModifiersForGroup(groupId, modifiers) {
-    const container = document.getElementById('editmodifierGroupsContainer');
-    const groupRow = container.querySelector(`[data-group-id="${groupId}"]`);
-
-    if (!groupRow) return;
-
-    const modifiersList = document.createElement('div');
-    modifiersList.className = 'modifiers-list mt-2';
-    modifiersList.innerHTML = `
-    <h6>Modifiers:</h6>
-    <ul class="list-group">
-        ${modifiers.map(mod =>
-        `<li class="list-group-item py-1"><div class="d-flex justify-content-between">${mod.modifierName} ${mod.rate}</div></li>`
-    ).join('')}
-    </ul>
-`;
-
-    // Append after the group row
-    groupRow.appendChild(modifiersList);
-}
-// Image upload handling for edit modal
-document.getElementById('editItemImage').addEventListener('change', function (e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            document.getElementById('editImagePreview').innerHTML = `
-            <img src="${e.target.result}" class="img-thumbnail" style="max-height: 150px;">
-        `;
-            document.getElementById('editRemoveImage').style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-    }
-});
-
-document.getElementById('editRemoveImage').addEventListener('click', function () {
-    document.getElementById('editItemImage').value = '';
-    document.getElementById('editImagePreview').innerHTML = '';
-    this.style.display = 'none';
-});
-
-// Function to open edit modal for modifier
-function editModifier(modifierId) {
-    fetch(`/Menu/GetModifier/${modifierId}`)
-        .then(response => response.json())
-        .then(modifier => {
-            // Populate form fields
-            document.getElementById('editModifierId').value = modifier.modifierId;
-            document.getElementById('editModifierName').value = modifier.modifierName;
-            document.getElementById('editModifierUnit').value = modifier.unit;
-            document.getElementById('editModifierRate').value = modifier.rate;
-            document.getElementById('editModifierQuantity').value = modifier.quantity;
-            document.getElementById('editModifierDescription').value = modifier.description;
-
-            // Load modifier groups dropdown
-            fetch('/Menu/GetModifierGroups')
-                .then(response => response.json())
-                .then(groups => {
-                    const select = document.getElementById('editModifierGroup');
-                    select.innerHTML = '<option value="">Select a group</option>';
-                    groups.forEach(group => {
-                        const option = document.createElement('option');
-                        option.value = group.modifierGroupId;
-                        option.textContent = group.modifierGroupName;
-                        if (group.modifierGroupId === modifier.modifierGroupId) {
-                            option.selected = true;
-                        }
-                        select.appendChild(option);
-                    });
-                });
-
-            // Show modal
-            const editModal = new bootstrap.Modal(document.getElementById('editModifierModal'));
-            editModal.show();
-        });
-}
-// Load modifier groups
-function loadModifierGroups() {
-    fetch('/Menu/GetModifierGroups')
-        .then(response => response.json())
-        .then(data => {
-            const modifierGroupList = document.getElementById('modifierGroupList');
-            modifierGroupList.innerHTML = ''; // Clear existing groups
-
-            if (data.length === 0) {
-                modifierGroupList.innerHTML = `
-                <div class="text-muted p-2">No modifier groups found</div>
-            `;
-                return;
-            }
-
-            data.forEach(group => {
-                const groupItem = `
-                <a href="#" class="list-group-item list-group-item-action modifier-group-item" 
-                   data-modifier-group-id="${group.modifierGroupId}">
-                    ${group.modifierGroupName}
-                    <span class="icon-container">
-                    <i class="material-icons" onclick="editModifierGroup(${group.modifierGroupId})">edit</i>
-                    <i class="material-icons" onclick="deleteModifierGroup(${group.modifierGroupId})">delete</i>
-                    </span>
-                </a>
-
-            `;
-                modifierGroupList.insertAdjacentHTML('beforeend', groupItem);
-            });
-
-            // Load modifiers for the first group by default
-            if (data.length > 0) {
-                const firstGroup = document.querySelector('.modifier-group-item');
-                if (firstGroup) {
-                    firstGroup.classList.add('active');
-                    loadModifiers(data[0].modifierGroupId);
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error loading modifier groups:', error);
-            const modifierGroupList = document.getElementById('modifierGroupList');
-            modifierGroupList.innerHTML = `
-        <div class="text-danger p-2">Error loading modifier groups</div>
-        `;
-        });
-}
-// Load modifiers for a group
-document.querySelectorAll('.modifier-group-item').forEach(group => {
-    group.addEventListener('click', () => {
-        const modifierGroupId = group.dataset.modifierGroupId;
-        loadModifiers(modifierGroupId);
-    });
-});
-
-let currentModifierPage = 1;
-let modifierPageSize = 10;
-let totalModifierPages = 1;
-let currentModifierGroupId = null;
-
-// Show existing modifiers modal
-document.getElementById('addModifierGroupModal').addEventListener('shown.bs.modal', function () {
-    // Store the current modifier group ID when modal opens
-    currentModifierGroupId = null; // Will be set when saving the group
-});
-
-// When Add Existing Modifiers link is clicked
-document.querySelector('[data-bs-target="#addExistingModifiersModal"]').addEventListener('click', function () {
-    loadAllModifiers();
-});
-// Fix broken loadAllModifiers function
-function loadAllModifiers(page = 1, searchTerm = '') {
-    currentModifierPage = page;
-
-    fetch(`/Menu/GetAllModifiers?page=${page}&pageSize=${modifierPageSize}&search=${encodeURIComponent(searchTerm)}`)
-        .then(response => response.json())
-        .then(data => {
-            const tbody = document.querySelector('#existingModifiersTable tbody');
-            tbody.innerHTML = '';
-
-            if (data.modifiers.length === 0) {
-                tbody.innerHTML = `
-    <tr>
-    <td colspan="5" class="text-center">No modifiers found</td>
-                </tr>
-    `;
-                return;
-            }
-
-            data.modifiers.forEach(modifier => {
-                const row = `
-    <tr>
-                    <td><input type="checkbox" class="form-check-input modifier-check" 
-                               data-modifier-id="${modifier.modifierId}"></td>
-                    <td>${modifier.modifierName}</td>
-                    <td>${modifier.unit}</td>
-                    <td>${modifier.rate}</td>
-                    <td>${modifier.quantity}</td>
-                </tr>
-    `;
-                tbody.insertAdjacentHTML('beforeend', row);
-            });
-
-            updateModifierPagination(data.totalPages);
-        });
-}
-
-// pagination function
-function updateModifierPagination(totalPages) {
-    const pagination = document.getElementById('pagination');
-    pagination.innerHTML = '';
-
-    // Previous button
-    const prevLi = document.createElement('li');
-    prevLi.className = `page-item ${currentModifierPage === 1 ? 'disabled' : ''}`;
-    prevLi.innerHTML = `<a class="page-link" href="#" aria-label="Previous">&laquo;</a>`;
-    prevLi.addEventListener('click', (e) => {
+$(document).ready(function() {
+    // Initialize the order functionality
+    PizzaShop.Order.init();
+    
+    // Category filtering (from your existing code)
+    $('.list-group-item-action').click(function(e) {
         e.preventDefault();
-        if (currentModifierPage > 1) {
-            loadAllModifiers(currentModifierPage - 1, document.getElementById('modifierSearch').value);
-        }
-    });
-    pagination.appendChild(prevLi);
-
-    // Page numbers
-    for (let i = 1; i <= totalPages; i++) {
-        const li = document.createElement('li');
-        li.className = `page-item ${i === currentModifierPage ? 'active' : ''}`;
-        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-        li.addEventListener('click', (e) => {
-            e.preventDefault();
-            loadAllModifiers(i, document.getElementById('modifierSearch').value);
-        });
-        pagination.appendChild(li);
-    }
-
-    // Next button
-    const nextLi = document.createElement('li');
-    nextLi.className = `page-item ${currentModifierPage === totalPages ? 'disabled' : ''}`;
-    nextLi.innerHTML = `<a class="page-link" href="#" aria-label="Next">&raquo;</a>`;
-    nextLi.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (currentModifierPage < totalPages) {
-            loadAllModifiers(currentModifierPage + 1, document.getElementById('modifierSearch').value);
-        }
-    });
-    pagination.appendChild(nextLi);
-}
-// Search modifiers
-document.getElementById('modifierSearch').addEventListener('input', function () {
-    loadAllModifiers(1, this.value);
-});
-
-// Page size change
-document.getElementById('pageSizeSelect').addEventListener('change', function () {
-    modifierPageSize = parseInt(this.value);
-    loadAllModifiers(1, document.getElementById('modifierSearch').value);
-});
-// Fix modifier group list click handler
-document.getElementById('modifierGroupList').addEventListener('click', function (e) {
-    const groupItem = e.target.closest('.modifier-group-item');
-    if (groupItem) {
-        document.querySelectorAll('.modifier-group-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        groupItem.classList.add('active');
-        const modifierGroupId = groupItem.dataset.modifierGroupId;
-        loadModifiers(modifierGroupId);
-    }
-});
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function () {
-    loadModifierGroups();
-    document.getElementById('modifiers-tab').addEventListener('shown.bs.tab', loadModifierGroups);
-});
-
-// Modified loadModifiers function to show selected modifiers
-function loadModifiers(modifierGroupId, page = 1, searchTerm = '') {
-    if (!modifierGroupId) return;
-
-    currentModifierGroupIdMain = modifierGroupId;
-    currentModifierPageMain = page;
-    currentModifierSearchTermMain = searchTerm || '';
-
-    fetch(`/Menu/GetModifiers?modifierGroupId=${modifierGroupId}&page=${page}&pageSize=${modifierPageSizeMain}&searchTerm=${encodeURIComponent(searchTerm)}`)
-        .then(response => response.json())
-        .then(data => {
-            const tbody = document.querySelector('#modifiersTable tbody');
-            tbody.innerHTML = '';
-
-            totalModifiers = data.totalModifiers;
-
-            // Update pagination info
-            updateModifierPaginationInfo();
-
-            if (data.modifiers.length === 0) {
-                tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center">No modifiers found</td>
-                </tr>
-            `;
-                return;
-            }
-
-            data.modifiers.forEach(modifier => {
-                const row = `
-                <tr data-modifier-id="${modifier.modifierId}">
-                    <td><input class="form-check-input modifier-checkbox" type="checkbox" data-modifier-id="${modifier.modifierId}"></td>
-                    <td>${modifier.modifierName}</td>
-                    <td>${modifier.unit}</td>
-                    <td>${modifier.rate}</td>
-                    <td>${modifier.quantity}</td>
-                    <td>
-                        <i class="material-icons" onclick="editModifier(${modifier.modifierId})">edit</i>
-                        <i class="material-icons" onclick="deleteModifier(${modifier.modifierId}, ${modifierGroupId})">delete</i>
-                    </td>
-                </tr>
-            `;
-                tbody.insertAdjacentHTML('beforeend', row);
-            });
-        });
-}
-
-function updateModifierPaginationInfo() {
-    const startItem = Math.min((currentModifierPageMain - 1) * modifierPageSizeMain + 1, totalModifiersMain);
-    const endItem = Math.min(currentModifierPageMain * modifierPageSizeMain, totalModifiersMain);
-    const totalPages = Math.ceil(totalModifiersMain / modifierPageSizeMain);
-
-    // Update showing info
-    document.querySelector('.modifier-showing-info').textContent = `Showing ${startItem} - ${endItem} of ${totalModifiersMain}`;
-
-    // Update button states
-    document.querySelector('.modifier-prev-page').disabled = currentModifierPageMain <= 1;
-    document.querySelector('.modifier-next-page').disabled = currentModifierPageMain >= totalPages;
-}
-
-let tempModifierGroupData = null;
-
-document.querySelector('[data-bs-target="#addExistingModifiersModal"]').addEventListener('click', function (e) {
-    e.preventDefault();
-
-    // Validate the form first
-    const form = document.getElementById('addModifierGroupForm');
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
-
-    // Store form data
-    tempModifierGroupData = {
-        modifierGroupName: document.getElementById('modifierGroupName').value,
-        description: document.getElementById('modifierGroupDescription').value,
-    };
-
-    // Show the existing modifiers modal
-    const existingModifiersModal = new bootstrap.Modal(document.getElementById('addExistingModifiersModal'));
-    existingModifiersModal.show();
-});
-
-// Single handler for adding selected modifiers
-document.getElementById('addSelectedModifiers').addEventListener('click', function () {
-    const existingModal = bootstrap.Modal.getInstance(document.getElementById('addExistingModifiersModal'));
-    const editModal = bootstrap.Modal.getInstance(document.getElementById('editModifierGroupModal'));
-    const isEditMode = sessionStorage.getItem('modifierEditMode') === 'true';
-    const selectedModifiers = Array.from(document.querySelectorAll('.modifier-check:checked'))
-        .map(checkbox => parseInt(checkbox.dataset.modifierId));
-
-    if (isEditMode) {
+        $('.list-group-item-action').removeClass('active');
+        $(this).addClass('active');
         
-        const groupId = currentEditingGroupId;
-        fetch('/Menu/AddModifiersToGroup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                modifierGroupId: groupId,
-                modifierIds: selectedModifiers
-            })
-        }).then(response => {
-            if (response.ok) {
-                loadCurrentModifiers(groupId);
-                existingModal.hide();
-                editModal.show(); // Show the edit modal again
-                sessionStorage.removeItem('modifierEditMode');
-            }
-        });
-    } else {
-        existingModal.hide();
-        createModifierGroupWithModifiers(tempModifierGroupData, selectedModifiers);
-    }
-});
-
-function createModifierGroupWithModifiers(groupData, modifierIds) {
-    // First create the modifier group
-    fetch('/Menu/AddModifierGroup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(groupData)
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (!data.modifierGroupId) {
-                throw new Error('Failed to create modifier group');
-            }
-
-            return fetch('/Menu/AddModifiersToGroup', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    modifierGroupId: data.modifierGroupId,
-                    modifierIds: modifierIds
-                })
-            });
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to add modifiers to group');
-            }
-            closeAllModals();
-            loadModifierGroups();
-        })
-        .catch(error => {
-            alert(error.message);
-        });
-}
-
-// Edit Category Functions
-function editCategory(categoryId) {
-    fetch(`/Menu/GetCategory/${categoryId}`)
-        .then(response => response.json())
-        .then(category => {
-            document.getElementById('editCategoryId').value = category.categoryId;
-            document.getElementById('editCategoryName').value = category.categoryName;
-            document.getElementById('editCategoryDescription').value = category.description;
-
-            const editModal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
-            editModal.show();
-        });
-}
-
-let currentEditingGroupId = null;
-
-function editModifierGroup(modifierGroupId) {
-    currentEditingGroupId = modifierGroupId;
-
-    fetch(`/Menu/GetModifierGroup/${modifierGroupId}`)
-        .then(response => response.json())
-        .then(group => {
-            document.getElementById('editModifierGroupId').value = group.modifierGroupId;
-            document.getElementById('editModifierGroupName').value = group.modifierGroupName;
-            document.getElementById('editModifierGroupDescription').value = group.description;
-
-            // Load current modifiers
-            loadCurrentModifiers(group.modifierGroupId);
-
-            const editModal = new bootstrap.Modal(document.getElementById('editModifierGroupModal'));
-            editModal.show();
-        });
-}
-function loadAllModifiersForEdit() {
-    const editModal = bootstrap.Modal.getInstance(document.getElementById('editModifierGroupModal'));
-    const existingModal = new bootstrap.Modal(document.getElementById('addExistingModifiersModal'), {
-        backdrop: 'static'
+        const category = $(this).data('category');
+        filterItems(category);
     });
-    editModal.hide();
 
-    existingModal.show();
-
-    document.getElementById('addExistingModifiersModal').addEventListener('hidden.bs.modal', () => {
-        editModal.show();
+    $('.btn-link').click(function() {
+        const itemId = $(this).data('item-id');
+        toggleFavorite(itemId, $(this));
     });
-    sessionStorage.setItem('modifierEditMode', 'true');
-    loadAllModifiers();
-}
-
-// Initialize modals
-const singleItemDeleteModal = new bootstrap.Modal(document.getElementById('singleItemDeleteModal'));
-const singleModifierDeleteModal = new bootstrap.Modal(document.getElementById('singleModifierDeleteModal'));
-const categoryDeleteModal = new bootstrap.Modal(document.getElementById('categoryDeleteModal'));
-const modifiergroupDeleteModal = new bootstrap.Modal(document.getElementById('modifiergroupDeleteModal'));
-
-// category delete
-function deleteCategory(categoryId) {
-    document.getElementById('categoryToDelete').value = categoryId;
-    categoryDeleteModal.show();
-}
-
-document.getElementById('confirmCategoryDelete').addEventListener('click', function () {
-    const categoryId = document.getElementById('categoryToDelete').value;
-
-    fetch(`/Menu/DeleteCategory/${categoryId}`, {
-        method: 'POST'
-    })
-        .then(response => {
-            if (response.ok) {
-                window.location.reload();
+    
+    // Search functionality (from your existing code)
+    $('input[type="text"]').on('keyup', function() {
+        const searchValue = $(this).val().toLowerCase();
+        $('.menu-item').each(function() {
+            const itemName = $(this).find('.card-title').text().toLowerCase();
+            if (itemName.includes(searchValue)) {
+                $(this).show();
             } else {
-                alert('Failed to delete category');
+                $(this).hide();
             }
-        })
-        .finally(() => {
-            categoryDeleteModal.hide();
         });
-});
-
-// Single Item Delete
-function deleteItem(itemId) {
-    document.getElementById('itemToDeleteId').value = itemId;
-    singleItemDeleteModal.show();
-}
-
-document.getElementById('confirmSingleItemDelete').addEventListener('click', function () {
-    const itemId = document.getElementById('itemToDeleteId').value;
-    fetch(`/Menu/DeleteItem/${itemId}`, {
-        method: 'POST'
-    })
-        .then(response => {
-            if (response.ok) {
-                // Get the current active category to reload items
-                window.location.reload();
-                const activeCategory = document.querySelector('#categoryList .list-group-item.active');
-                if (activeCategory) {
-                    const categoryId = activeCategory.dataset.categoryId;
-                    loadItems(categoryId);
-                }
-            } else {
-                alert('Failed to delete item');
-            }
-        })
-        .finally(() => {
-            singleItemDeleteModal.hide();
-        });
-});
-function deleteModifierGroup(modifierGroupId) {
-    document.getElementById('ModifierGroupToDelete').value = modifierGroupId;
-    modifiergroupDeleteModal.show();
-}
-
-document.getElementById('confirmModifierGroupDelete').addEventListener('click', function () {
-    const modifierGroupId = document.getElementById('ModifierGroupToDelete').value;
-
-    fetch(`/Menu/DeleteModifierGroup/${modifierGroupId}`, {
-        method: 'POST'
-    })
-        .then(response => {
-            if (response.ok) {
-                loadModifierGroups();
-            } else {
-                alert('Failed to delete modifier group');
-            }
-        })
-        .finally(() => {
-            modifiergroupDeleteModal.hide();
-        });
-});
-// Single Modifier Delete
-function removeModifierFromGroup(modifierId, groupId) {
-    fetch('/Menu/RemoveModifierFromGroup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            modifierGroupId: groupId,
-            modifierId: modifierId
-        })
-    }).then(response => {
-        if (response.ok) {
-            loadCurrentModifiers(groupId);
-            loadModifiers(groupId); // Refresh the main table if needed
-        }
-    });
-}
-function loadCurrentModifiers(groupId) {
-    fetch(`/Menu/GetModifiersById?modifierGroupId=${groupId}`)
-        .then(response => response.json())
-        .then(modifiers => {
-            const container = document.getElementById('currentModifiersContainer');
-            container.innerHTML = '';
-
-            modifiers.forEach(modifier => {
-                const badge = `
-                <div class="badge badge-pill bg-secondary d-flex align-items-center gap-2">
-                    ${modifier.modifierName}
-                    <button type="button" class="btn-close btn-close-grey" 
-                        onclick="removeModifierFromGroup(${modifier.modifierId}, ${groupId})"
-                        aria-label="Remove"></button>
-                </div>
-            `;
-                container.insertAdjacentHTML('beforeend', badge);
-            });
-        });
-}
-function deleteModifier(modifierId, groupId) {
-    document.getElementById('modifierToDeleteId').value = modifierId;
-    document.getElementById('modifierGroupId').value = groupId;
-    singleModifierDeleteModal.show();
-}
-document.getElementById('globalItemCheckbox').addEventListener('change', function () {
-    const isChecked = this.checked;
-    document.querySelectorAll('.item-checkbox').forEach(checkbox => {
-        checkbox.checked = isChecked;
-
-        const event = new Event('change');
-        checkbox.dispatchEvent(event);
-    });
-});
-document.getElementById('globalModifierCheckbox').addEventListener('change', function () {
-    const isChecked = this.checked;
-    document.querySelectorAll('.modifier-checkbox').forEach(checkbox => {
-        checkbox.checked = isChecked;
-
-        const event = new Event('change');
-        checkbox.dispatchEvent(event);
-    });
-});
-document.getElementById('confirmSingleModifierDelete').addEventListener('click', function () {
-    const modifierId = document.getElementById('modifierToDeleteId').value;
-    const groupId = document.getElementById('modifierGroupId').value;
-
-    fetch('/Menu/RemoveModifierFromGroup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            modifierGroupId: groupId,
-            modifierId: modifierId
-        })
-    })
-        .then(response => {
-            if (response.ok) {
-                loadModifiers(groupId);
-            } else {
-                alert('Failed to remove modifier from group');
-            }
-        })
-        .finally(() => {
-            singleModifierDeleteModal.hide();
-        });
-});
-// Mass Delete Items
-document.getElementById('confirmDeleteItems').addEventListener('click', function () {
-    const selectedItems = Array.from(document.querySelectorAll('#itemsTable .item-checkbox:checked'))
-        .map(checkbox => parseInt(checkbox.dataset.itemId));
-    console.log(selectedItems);
-    if (selectedItems.length === 0) {
-        alert('Please select at least one item to delete.');
-        return;
-    }
-
-    fetch('/Menu/DeleteItems', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(selectedItems)
-    }).then(response => {
-        if (response.ok) {
-            window.location.reload();
-        } else {
-            alert('Failed to delete items');
-        }
     });
 });
 
-// Mass Delete Modifiers
-document.getElementById('confirmDeleteModifiers').addEventListener('click', function () {
-    const selectedModifiers = Array.from(document.querySelectorAll('#modifiersTable .modifier-checkbox:checked'))
-        .map(checkbox => parseInt(checkbox.dataset.modifierId));
-
-    if (selectedModifiers.length === 0) {
-        alert('Please select at least one modifier to delete.');
-        return;
-    }
-
-    const activeGroup = document.querySelector('#modifierGroupList .modifier-group-item.active');
-    if (!activeGroup) {
-        alert('No modifier group selected');
-        return;
-    }
-    const modifierGroupId = parseInt(activeGroup.dataset.modifierGroupId);
-    const payload = {
-        modifierGroupId: modifierGroupId,
-        modifierIds: selectedModifiers
+// Create a namespace for the Order functionality
+var PizzaShop = PizzaShop || {};
+PizzaShop.Order = (function() {
+    // Private variables
+    var currentOrder = {
+        orderId: 0,
+        items: [],
+        taxes: [],
+        subTotal: 0,
+        totalAmount: 0
     };
-
-    fetch('/Menu/DeleteModifiersFromGroup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    }).then(response => {
-        if (response.ok) {
-            // Reload just the modifiers for this group
-            loadModifiers(modifierGroupId);
-        } else {
-            alert('Failed to delete modifiers');
+    
+    // Cache DOM elements
+    var $orderItemsContainer;
+    var $subTotal;
+    var $totalAmount;
+    var $paymentMethodRadios;
+    
+    // Initialize the module
+    function init() {
+        $orderItemsContainer = $('.order-items');
+        $subTotal = $('#subTotal');
+        $totalAmount = $('#totalAmount');
+        $paymentMethodRadios = $('input[name="paymentMethod"]');
+        
+        // Bind events
+        bindEvents();
+        
+        // If URL contains orderId parameter, load that order
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('orderId');
+        if (orderId) {
+            loadOrderDetails(orderId);
         }
+        
+        // Setup accordion functionality for order items
+        setupAccordion();
+    }
+    
+    // Bind all events
+    function bindEvents() {
+        // Quantity control buttons
+        $(document).on('click', '.quantity-control button', function() {
+            const $input = $(this).closest('.quantity-control').find('input');
+            const currentVal = parseInt($input.val());
+            
+            if ($(this).text() === '+') {
+                $input.val(currentVal + 1);
+            } else if ($(this).text() === '-' && currentVal > 1) {
+                $input.val(currentVal - 1);
+            }
+            
+            // Get the item details and update quantities
+            const $item = $(this).closest('.accordion-item');
+            const itemIndex = $item.data('item-index');
+            
+            if (itemIndex !== undefined) {
+                updateItemQuantity(itemIndex, parseInt($input.val()));
+            }
+        });
+        
+        // Delete item buttons
+        $(document).on('click', '.btn-trash', function() {
+            const $item = $(this).closest('.accordion-item');
+            const itemIndex = $item.data('item-index');
+            
+            if (itemIndex !== undefined) {
+                removeItem(itemIndex);
+                $item.remove();
+                recalculateTotals();
+            }
+        });
+        
+        // Payment method change
+        $paymentMethodRadios.on('change', function() {
+            currentOrder.paymentMode = $(this).attr('id').replace('Payment', '');
+        });
+        
+        // Save button
+        $('.btn-primary').on('click', function() {
+            saveOrder();
+        });
+        
+        // Complete button
+        $('.btn-outline-primary').on('click', function() {
+            completeOrder();
+        });
+        
+        // Generate Invoice button
+        $('.btn-outline-secondary').on('click', function() {
+            generateInvoice();
+        });
+        
+        // Cancel button
+        $('.btn-outline-danger').on('click', function() {
+            cancelOrder();
+        });
+    }
+    
+    // Setup accordion functionality
+    function setupAccordion() {
+        $(document).on('click', '.accordion-header', function() {
+            const $item = $(this).closest('.accordion-item');
+            const $body = $item.find('.accordion-body');
+            
+            $body.slideToggle(200);
+            $(this).find('i').toggleClass('fa-chevron-down fa-chevron-right');
+        });
+    }
+    
+    // Load order details from the server
+    function loadOrderDetails(orderId) {
+        $.ajax({
+            url: '/Order/GetOrderDetails',
+            type: 'GET',
+            data: { orderId: 1 },
+            dataType: 'json',
+            success: function(response) {
+                if (response) {
+                    populateOrderDetails(response);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading order details:', error);
+                alert('Failed to load order details. Please try again.');
+            }
+        });
+    }
+    
+    // Populate the order summary with order details
+    function populateOrderDetails(orderDetails) {
+        // Store the current order
+        currentOrder = {
+            orderId: orderDetails.orderId,
+            items: orderDetails.orderItems || [],
+            taxes: orderDetails.taxes || [],
+            subTotal: orderDetails.subTotal,
+            totalAmount: orderDetails.totalAmount,
+            paymentMode: orderDetails.paymentMode,
+            status: orderDetails.status
+        };
+        
+        // Clear existing items
+        $orderItemsContainer.empty();
+        
+        // Populate table info
+        $('.table-info .fw-bold').text(orderDetails.sectionName || 'First Floor');
+        $('.table-info .text-muted').text('Table: ' + (orderDetails.tableName || 'T2, T6'));
+        
+        // Add order items
+        if (orderDetails.orderItems && orderDetails.orderItems.length > 0) {
+            orderDetails.orderItems.forEach(function(item, index) {
+                appendOrderItem(item, index);
+            });
+        }
+        
+        // Populate totals
+        populateTotals(orderDetails);
+        
+        // Set payment method
+        if (orderDetails.paymentMode) {
+            const paymentMode = orderDetails.paymentMode.toLowerCase();
+            $(`#${paymentMode}Payment`).prop('checked', true);
+        }
+    }
+    
+    // Append an order item to the container
+    function appendOrderItem(item, index) {
+        const modifiersHtml = item.modifiers && item.modifiers.length > 0 
+            ? item.modifiers.map(mod => `
+                <div class="d-flex justify-content-between text-muted small mb-1">
+                    <span>• ${mod.modifierName}</span>
+                    <span>₹${mod.price.toFixed(2)}</span>
+                </div>
+            `).join('') 
+            : '';
+            
+        const modifiersTotalAmount = item.modifiers && item.modifiers.length > 0
+            ? item.modifiers.reduce((total, mod) => total + mod.totalAmount, 0)
+            : 0;
+            
+        const itemHtml = `
+        <div class="accordion-item mb-2" data-item-index="${index}">
+            <div class="d-flex align-items-center border-bottom pb-2">
+                <div class="col-6">
+                    <div class="accordion-header d-flex align-items-center">
+                        <i class="fas fa-chevron-down me-2"></i>
+                        <span class="fw-bold">${item.itemName}</span>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="input-group input-group-sm quantity-control">
+                        <button class="btn btn-outline-secondary" type="button">-</button>
+                        <input type="text" class="form-control text-center" value="${item.quantity}">
+                        <button class="btn btn-outline-secondary" type="button">+</button>
+                    </div>
+                </div>
+                <div class="col-2 text-end fw-bold">₹${item.price.toFixed(2)}</div>
+                <div class="col-1 text-end">
+                    <button class="btn btn-sm text-danger p-0 btn-trash"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            ${item.modifiers && item.modifiers.length > 0 ? `
+            <div class="accordion-body pt-2 pb-1">
+                <div class="ms-3">
+                    ${modifiersHtml}
+                </div>
+                <div class="text-end text-muted small">₹${modifiersTotalAmount.toFixed(2)}</div>
+            </div>
+            ` : ''}
+        </div>
+        `;
+        
+        $orderItemsContainer.append(itemHtml);
+    }
+    
+    // Populate order totals section
+    function populateTotals(orderDetails) {
+        // Clear existing tax items
+        $('.order-totals').empty();
+        
+        // Add subtotal
+        $('.order-totals').append(`
+            <div class="d-flex justify-content-between mb-1">
+                <span>SubTotal</span>
+                <span>₹${orderDetails.subTotal.toFixed(2)}</span>
+            </div>
+        `);
+        
+        // Add taxes
+        if (orderDetails.taxes && orderDetails.taxes.length > 0) {
+            orderDetails.taxes.forEach(function(tax) {
+                $('.order-totals').append(`
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>${tax.taxName}</span>
+                        <span>₹${tax.taxValue.toFixed(2)}</span>
+                    </div>
+                `);
+            });
+        }
+        
+        // Update total amount
+        $('#totalAmount').text(`₹${orderDetails.totalAmount.toFixed(2)}`);
+    }
+    
+    // Update item quantity
+    function updateItemQuantity(itemIndex, newQuantity) {
+        if (currentOrder.items[itemIndex]) {
+            const item = currentOrder.items[itemIndex];
+            const oldQuantity = item.quantity;
+            item.quantity = newQuantity;
+            
+            // Update total amount for this item
+            const pricePerUnit = item.price / oldQuantity;
+            item.price = pricePerUnit * newQuantity;
+            
+            // Update modifiers if any
+            if (item.modifiers && item.modifiers.length > 0) {
+                item.modifiers.forEach(function(mod) {
+                    const modPricePerUnit = mod.price / oldQuantity;
+                    mod.quantity = newQuantity;
+                    mod.price = modPricePerUnit * newQuantity;
+                    mod.totalAmount = mod.price;
+                });
+            }
+            
+            // Update item total
+            item.totalAmount = item.price + (item.modifiers ? item.modifiers.reduce((total, mod) => total + mod.totalAmount, 0) : 0);
+            
+            // Recalculate totals
+            recalculateTotals();
+        }
+    }
+    
+    // Remove an item from the order
+    function removeItem(itemIndex) {
+        if (currentOrder.items[itemIndex]) {
+            currentOrder.items.splice(itemIndex, 1);
+        }
+    }
+    
+    // Recalculate order totals
+    function recalculateTotals() {
+        // Calculate subtotal
+        currentOrder.subTotal = currentOrder.items.reduce((total, item) => total + item.totalAmount, 0);
+        
+        // Calculate taxes
+        if (currentOrder.taxes && currentOrder.taxes.length > 0) {
+            // Example tax calculation - this should match your business logic
+            currentOrder.taxes.forEach(function(tax) {
+                // Simple percentage calculation
+                if (tax.taxName === 'CGST') {
+                    tax.taxValue = currentOrder.subTotal * 0.12; // 12% CGST
+                } else if (tax.taxName === 'GST') {
+                    tax.taxValue = currentOrder.subTotal * 0.02; // 2% GST
+                } else if (tax.taxName === 'SGST') {
+                    tax.taxValue = currentOrder.subTotal * 0.12; // 12% SGST
+                } else if (tax.taxName === 'Other') {
+                    tax.taxValue = 89.00; // Fixed amount
+                }
+            });
+        }
+        
+        // Calculate total amount
+        const taxTotal = currentOrder.taxes.reduce((total, tax) => total + tax.taxValue, 0);
+        currentOrder.totalAmount = currentOrder.subTotal + taxTotal;
+        
+        // Update the UI
+        updateTotalsUI();
+    }
+    
+    // Update totals in the UI
+    function updateTotalsUI() {
+        // Update subtotal
+        $('.order-totals div:first-child span:last-child').text(`₹${currentOrder.subTotal.toFixed(2)}`);
+        
+        // Update taxes
+        if (currentOrder.taxes && currentOrder.taxes.length > 0) {
+            currentOrder.taxes.forEach(function(tax, index) {
+                $(`.order-totals div:nth-child(${index + 2}) span:last-child`).text(`₹${tax.taxValue.toFixed(2)}`);
+            });
+        }
+        
+        // Update total amount
+        $('#totalAmount').text(`₹${currentOrder.totalAmount.toFixed(2)}`);
+    }
+    
+    // Save the current order
+    function saveOrder() {
+        if (currentOrder.items.length === 0) {
+            alert('Please add items to the order before saving.');
+            return;
+        }
+        
+        const orderData = {
+            orderId: currentOrder.orderId,
+            paymentMode: currentOrder.paymentMode || $('input[name="paymentMethod"]:checked').attr('id').replace('Payment', ''),
+            tableName: $('.table-info .text-muted').text().replace('Table: ', ''),
+            sectionName: $('.table-info .fw-bold').text(),
+            orderItems: currentOrder.items,
+            taxes: currentOrder.taxes,
+            subTotal: currentOrder.subTotal,
+            totalAmount: currentOrder.totalAmount
+        };
+        
+        $.ajax({
+            url: '/Order/SaveOrder',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(orderData),
+            success: function(response) {
+                if (response && response.success) {
+                    alert('Order saved successfully!');
+                    if (response.orderId) {
+                        currentOrder.orderId = response.orderId;
+                    }
+                } else {
+                    alert('Failed to save order. Please try again.');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error saving order:', error);
+                alert('Failed to save order. Please try again.');
+            }
+        });
+    }
+    
+    // Complete the current order
+    function completeOrder() {
+        if (currentOrder.orderId === 0) {
+            alert('Please save the order before completing it.');
+            return;
+        }
+        
+        $.ajax({
+            url: '/Order/CompleteOrder',
+            type: 'POST',
+            data: { orderId: currentOrder.orderId },
+            success: function(response) {
+                if (response && response.success) {
+                    alert('Order completed successfully!');
+                    currentOrder.status = 'Completed';
+                } else {
+                    alert('Failed to complete order. Please try again.');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error completing order:', error);
+                alert('Failed to complete order. Please try again.');
+            }
+        });
+    }
+    
+    // Generate invoice for the current order
+    function generateInvoice() {
+        if (currentOrder.orderId === 0) {
+            alert('Please save the order before generating an invoice.');
+            return;
+        }
+        
+        // Open invoice in a new window
+        window.open(`/Order/GetPdf?id=${currentOrder.orderId}`, '_blank');
+    }
+    
+    // Cancel the current order
+    function cancelOrder() {
+        if (currentOrder.orderId === 0) {
+            // Just clear the UI if the order hasn't been saved
+            clearOrderUI();
+            return;
+        }
+        
+        if (confirm('Are you sure you want to cancel this order?')) {
+            $.ajax({
+                url: '/Order/CancelOrder',
+                type: 'POST',
+                data: { orderId: currentOrder.orderId },
+                success: function(response) {
+                    if (response && response.success) {
+                        alert('Order cancelled successfully!');
+                        clearOrderUI();
+                    } else {
+                        alert('Failed to cancel order. Please try again.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error cancelling order:', error);
+                    alert('Failed to cancel order. Please try again.');
+                }
+            });
+        }
+    }
+    
+    // Clear the order UI
+    function clearOrderUI() {
+        $orderItemsContainer.empty();
+        $('.order-totals').empty();
+        $('.order-totals').append(`
+            <div class="d-flex justify-content-between mb-1">
+                <span>SubTotal</span>
+                <span>₹0.00</span>
+            </div>
+        `);
+        $('#totalAmount').text('₹0.00');
+        currentOrder = {
+            orderId: 0,
+            items: [],
+            taxes: [],
+            subTotal: 0,
+            totalAmount: 0
+        };
+    }
+    
+    // Add a new item to the order
+    function addItemToOrder(item) {
+        // Create new item object
+        const newItem = {
+            itemName: item.itemName,
+            quantity: 1,
+            price: item.rate,
+            totalAmount: item.rate,
+            modifiers: []
+        };
+        
+        // Add item to current order
+        currentOrder.items.push(newItem);
+        
+        // Add item to UI
+        appendOrderItem(newItem, currentOrder.items.length - 1);
+        
+        // Recalculate totals
+        recalculateTotals();
+    }
+    
+    // Public API
+    return {
+        init: init,
+        addItemToOrder: addItemToOrder,
+        loadOrderDetails: loadOrderDetails
+    };
+})();
+
+// From your existing code
+function filterItems(category) {
+    $('.menu-item').each(function() {
+        const itemCategory = $(this).data('category');
+        const isFavorite = $(this).data('favorite') == 'true';
+        
+        const showItem = 
+            category === 'all' ||
+            (category === 'favorites' && isFavorite) ||
+            itemCategory == category;
+        
+        $(this).toggle(showItem);
     });
-});
-function closeAllModals() {
-    $('.modal').modal('hide');
-    $('body').removeClass('modal-open');
-    $('.modal-backdrop').remove();
-    document.getElementById('addModifierGroupForm').reset();
-    tempModifierGroupData = null;
-}<div class="modal fade" id="addModifierGroupModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add Modifier Group</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+}
+
+async function toggleFavorite(itemId, element) {
+    try {
+        const response = await fetch(`/Menu/ToggleFavorite/${itemId}`, {
+            method: 'POST'
+        });
+        if (response.ok) {
+            element.toggleClass('text-muted text-primary');
+            const icon = element.find('i');
+            icon.toggleClass('far fas');
+
+            const menuItem = element.closest('.menu-item');
+            const currentFavorite = menuItem.data('favorite');
+            menuItem.data('favorite', !currentFavorite);
+        }
+    } catch (error) {
+        console.error('Error toggling favorite:', error);
+    }
+}
+
+// Add click handler for menu items
+$(document).on('click', '.menu-card', function() {
+    const $menuItem = $(this).closest('.menu-item');
+    const itemName = $menuItem.find('.card-title').text();
+    const itemPrice = parseFloat($menuItem.find('.card-text').text().replace('₹', ''));
+    
+    // Create a simple item object
+    const item = {
+        itemName: itemName,
+        rate: itemPrice
+    };
+    
+    // Add to order
+    PizzaShop.Order.addItemToOrder(item);
+});@model PizzaShop.Entity.ViewModel.OrderMenuViewModel
+@{
+    Layout = "~/Views/Shared/_OrderAppLayout.cshtml";
+    ViewData["Title"] = "Order Menu";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Category Sidebar -->
+        <div class="col-md-2 col-lg-2 col-xl-2 p-0 bg-white category-sidebar">
+            <div class="p-3">
+                <h5 class="mb-3">Category</h5>
+                <div class="list-group list-group-flush">
+                    <a href="#" class="list-group-item list-group-item-action" data-category="favorites">Favorite
+                        Items</a>
+                    <a href="#" class="list-group-item list-group-item-action active" data-category="all">All</a>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <a href="#" class="list-group-item list-group-item-action"
+                            data-category="@category.CategoryId">@category.CategoryName</a>
+                    }
                 </div>
-                <div class="modal-body">
-                    <form id="addModifierGroupForm">
-                        <div class="mb-3 form-floating">
-                            <input type="text" class="form-control" id="modifierGroupName" name="modifierGroupName">
-                            <label for="modifierGroupName" class="form-label">Name</label>
+            </div>
+        </div>
+
+        <!-- Menu Items Section -->
+        <div class="col-md-6 col-lg-6 col-xl-6 bg-light">
+            <div class="p-3">
+                <!-- Search Bar and Legend -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Search" aria-label="Search">
+                            <span class="input-group-text bg-white border-start-0">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
                         </div>
-                        <div class="mb-3 form-floating">
-                            <textarea class="form-control" id="modifierGroupDescription" rows="1"></textarea>
-                            <label for="modifierGroupDescription" class="form-label">Description</label>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="d-inline-block me-3">
+                            <span class="badge rounded-circle p-1 bg-success me-1"></span>
+                            Vegetarian
                         </div>
-                        <div class="mb-2">
-                            <a class="primary text-decoration-none" data-bs-toggle="modal"
-                                data-bs-target="#addExistingModifiersModal">+ Add Existing Modifiers</a>
+                        <div class="d-inline-block me-3">
+                            <span class="badge rounded-circle p-1 bg-danger me-1"></span>
+                            Non-Vegetarian
                         </div>
-                    </form>
+                        <div class="d-inline-block">
+                            <span class="badge rounded-circle p-1 vegan-badge me-1"></span>
+                            Vegan
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="send-button px-3 py-1" id="saveModifierGroup">Save</button>
-                    <button type="button" class="back-button px-3 py-1" data-bs-dismiss="modal">Cancel</button>
+
+                <!-- Menu Grid -->
+                <div class="row g-3" id="menu-items-container">
+                    @foreach (var item in Model.MenuItems)
+                    {
+                        <div class="col-6 col-sm-6 col-md-4 col-lg-4 col-xl-3 menu-item" data-category="@item.CategoryId"
+                            data-favorite="@item.IsFavourite.ToString().ToLower()" data-type="@item.ItemType.ToLower()">
+                            <div class="card h-100 position-relative menu-card">
+                                <div class="type-indicator @item.ItemType.ToLower()"></div>
+                                <div class="card-body d-flex align-items-center">
+                                    <div class="item-image-container me-2">
+                                        <img src="@item.ItemImage" alt="@item.ItemName" class="item-image">
+                                    </div>
+                                    <div>
+                                        <h6 class="card-title mb-1">@item.ItemName</h6>
+                                        <p class="card-text mb-0">₹@item.Rate</p>
+                                    </div>
+                                    <div class="ms-auto">
+                                        <button
+                                            class="btn btn-link p-0 @(item.IsFavourite == true ? "text-primary" : "text-muted")"
+                                            data-item-id="@item.ItemId">
+                                            <i class="@(item.IsFavourite == true ? "fas" : "far") fa-heart"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <!-- Order Summary Section -->
+        <div class="col-md-4 col-lg-4 col-xl-4">
+            <div class="bg-white p-3 h-100 order-summary">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="table-info d-flex align-items-center">
+                        <i class="fa-solid fa-chair me-2"></i>
+                        <div>
+                            <div class="fw-bold">First Floor</div>
+                            <div class="text-muted small">Table: T2, T6</div>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary me-1"><i class="fas fa-qrcode"></i></button>
+                        <button class="btn btn-sm btn-outline-secondary me-1"><i class="fas fa-user"></i></button>
+                        <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-comment"></i></button>
+                    </div>
+                </div>
+
+                <!-- Items List -->
+                <div class="order-items mb-3">
+                    <!-- Margherita -->
+                    <div class="accordion-item mb-2">
+                        <div class="d-flex align-items-center border-bottom pb-2">
+                            <div class="col-6">
+                                <div class="accordion-header d-flex align-items-center">
+                                    <i class="fas fa-chevron-down me-2"></i>
+                                    <span class="fw-bold">Margherita</span>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="input-group input-group-sm quantity-control">
+                                    <button class="btn btn-outline-secondary" type="button">-</button>
+                                    <input type="text" class="form-control text-center" value="1">
+                                    <button class="btn btn-outline-secondary" type="button">+</button>
+                                </div>
+                            </div>
+                            <div class="col-2 text-end fw-bold">₹120.00</div>
+                            <div class="col-1 text-end">
+                                <button class="btn btn-sm text-danger p-0"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div class="accordion-body pt-2 pb-1">
+                            <div class="ms-3">
+                                <div class="d-flex justify-content-between text-muted small mb-1">
+                                    <span>• Onion</span>
+                                    <span>₹20.00</span>
+                                </div>
+                            </div>
+                            <div class="text-end text-muted small">₹20.00</div>
+                        </div>
+                    </div>
+
+                    <!-- Aaloo Sandwich -->
+                    <div class="accordion-item mb-2">
+                        <div class="d-flex align-items-center border-bottom pb-2">
+                            <div class="col-6">
+                                <div class="accordion-header d-flex align-items-center">
+                                    <i class="fas fa-chevron-down me-2"></i>
+                                    <span class="fw-bold">Aaloo Sandwich</span>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="input-group input-group-sm quantity-control">
+                                    <button class="btn btn-outline-secondary" type="button">-</button>
+                                    <input type="text" class="form-control text-center" value="1">
+                                    <button class="btn btn-outline-secondary" type="button">+</button>
+                                </div>
+                            </div>
+                            <div class="col-2 text-end fw-bold">₹120.00</div>
+                            <div class="col-1 text-end">
+                                <button class="btn btn-sm text-danger p-0"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div class="accordion-body pt-2 pb-1">
+                            <div class="ms-3">
+                                <div class="d-flex justify-content-between text-muted small mb-1">
+                                    <span>• Mushroom</span>
+                                    <span>₹50.00</span>
+                                </div>
+                            </div>
+                            <div class="text-end text-muted small">₹50.00</div>
+                        </div>
+                    </div>
+
+                    <!-- Capsicum -->
+                    <div class="accordion-item mb-2">
+                        <div class="d-flex align-items-center border-bottom pb-2">
+                            <div class="col-6">
+                                <div class="accordion-header d-flex align-items-center">
+                                    <i class="fas fa-chevron-down me-2"></i>
+                                    <span class="fw-bold">Capsicum</span>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="input-group input-group-sm quantity-control">
+                                    <button class="btn btn-outline-secondary" type="button">-</button>
+                                    <input type="text" class="form-control text-center" value="1">
+                                    <button class="btn btn-outline-secondary" type="button">+</button>
+                                </div>
+                            </div>
+                            <div class="col-2 text-end fw-bold">₹800</div>
+                            <div class="col-1 text-end">
+                                <button class="btn btn-sm text-danger p-0"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div class="accordion-body pt-2 pb-1">
+                            <div class="ms-3">
+                                <div class="d-flex justify-content-between text-muted small mb-1">
+                                    <span>• Onion</span>
+                                    <span>₹20</span>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted small mb-1">
+                                    <span>• Pepperoni</span>
+                                    <span>₹500</span>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted small mb-1">
+                                    <span>• Medium</span>
+                                    <span>₹150</span>
+                                </div>
+                            </div>
+                            <div class="text-end text-muted small">₹670.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="order-totals py-2 border-top">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>SubTotal</span>
+                        <span>₹1780.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>CGST</span>
+                        <span>₹213.60</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>GST</span>
+                        <span>₹35.60</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Other</span>
+                        <span>₹89.00</span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between fw-bold mb-3">
+                    <div>Total</div>
+                    <div>₹2118.20</div>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="d-flex justify-content-between mb-3">
+                    <label class="mb-2">Payment Method</label>
+                    <div class="">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="cashPayment" checked>
+                            <label class="form-check-label" for="cashPayment">Cash</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="cardPayment">
+                            <label class="form-check-label" for="cardPayment">Card</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="upiPayment">
+                            <label class="form-check-label" for="upiPayment">UPI</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <button class="btn btn-primary w-100">Save</button>
+                        </div>
+                        <div class="col-4">
+                            <button class="btn btn-outline-primary w-100">Complete</button>
+                        </div>
+                        <div class="col-4">
+                            <button class="btn btn-outline-secondary w-100">Generate Invoice</button>
+                        </div>
+                        <div class="col-12 mt-2">
+                            <button class="btn btn-outline-danger w-100">Cancel</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="modal fade" id="addExistingModifiersModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add Existing Modifiers</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="modifierSearch" class="form-label">Search</label>
-                        <input type="text" class="form-control" id="modifierSearch" placeholder="Search modifiers">
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table" id="existingModifiersTable">
-                            <thead>
-                                <tr>
-                                    <th scope="col" class="text-black-50"><input class="form-check-input"
-                                            type="checkbox" value="" disabled></th>
-                                    <th scope="col" class="text-black-50">Name</th>
-                                    <th scope="col" class="text-black-50">Unit</th>
-                                    <th scope="col" class="text-black-50">Rate</th>
-                                    <th scope="col" class="text-black-50">Quantity</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Existing modifiers will be loaded here -->
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="d-flex justify-content-between mt-3">
-                        <div class="form-group">
-                            <select class="form-select" id="pageSizeSelect">
-                                <option value="5">5 per page</option>
-                                <option value="10" selected>10 per page</option>
-                                <option value="15">15 per page</option>
-                            </select>
+</div>
+<style>
+    /* Order Summary Styles */
+    .order-summary {
+        border-left: 1px solid #e0e0e0;
+        height: calc(100vh - 60px);
+        overflow-y: auto;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .accordion-item {
+        background-color: #fff;
+        border-radius: 4px;
+    }
+
+    .accordion-header {
+        cursor: pointer;
+    }
+
+    .accordion-body {
+        background-color: #f9f9f9;
+        border-radius: 0 0 4px 4px;
+    }
+
+    .quantity-control {
+        width: 85px;
+    }
+
+    .quantity-control .form-control {
+        text-align: center;
+        padding: 0.25rem;
+    }
+
+    .input-group-sm .btn {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.875rem;
+    }
+
+    /* Ensure proper spacing between elements */
+    .order-items .accordion-item:last-child {
+        margin-bottom: 0;
+    }
+
+    /* Category Sidebar Styles */
+    .category-sidebar {
+        min-height: calc(100vh - 60px);
+        border-right: 1px solid #e0e0e0;
+    }
+
+    .list-group-item {
+        border-left: none;
+        border-right: none;
+        border-radius: 0 !important;
+        padding: 0.5rem 1rem;
+    }
+
+    .list-group-item.active {
+        background-color: #0066b2;
+        color: white;
+        border-color: #0066b2;
+    }
+
+    /* Menu Card Styles */
+    .menu-card {
+        border: none;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }
+
+    .menu-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Item Image Container */
+    .item-image-container {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .item-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Type Indicators */
+    .type-indicator {
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0 25px 25px 0;
+        right: 0;
+        top: 0;
+    }
+
+    .type-indicator.vegetarian {
+        border-color: transparent #28a745 transparent transparent;
+    }
+
+    .type-indicator.non-vegetarian {
+        border-color: transparent #dc3545 transparent transparent;
+    }
+
+    .type-indicator.vegan {
+        border-color: transparent #FF9900 transparent transparent;
+    }
+
+    /* Order Summary Styles */
+    .order-summary {
+        border-left: 1px solid #e0e0e0;
+        height: calc(100vh - 60px);
+        overflow-y: auto;
+    }
+
+    .table-info {
+        text-align: right;
+        font-size: 0.9rem;
+    }
+
+    /* Badge Styles */
+    .badge.rounded-circle {
+        display: inline-block;
+    }
+
+    .order-summary {
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .item {
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 8px;
+        margin-bottom: 8px;
+    }
+
+    .input-group .form-control {
+        text-align: center;
+    }
+
+    .input-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+    }
+
+    .order-summary {
+        border-left: 1px solid #e0e0e0;
+        height: calc(100vh - 60px);
+        overflow-y: auto;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .accordion-item {
+        background-color: #fff;
+        border-radius: 4px;
+    }
+
+    .accordion-header {
+        cursor: pointer;
+    }
+
+    .accordion-body {
+        background-color: #f9f9f9;
+        border-radius: 0 0 4px 4px;
+        display: none; /* Hidden by default */
+    }
+
+    .quantity-control {
+        width: 85px;
+    }
+
+    .quantity-control .form-control {
+        text-align: center;
+        padding: 0.25rem;
+    }
+
+    .input-group-sm .btn {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.875rem;
+    }
+
+    .order-items .accordion-item:last-child {
+        margin-bottom: 0;
+    }
+    
+</style>
+<script>
+    $(document).ready(function() {
+        $('.accordion-header').click(function() {
+            $(this).closest('.accordion-item').find('.accordion-body');
+            $(this).find('i').toggleClass('fa-chevron-down fa-chevron-right');
+        });
+    });
+</script>
+<script src="~/js/ordermenu.js"></script>namespace PizzaShop.Entity.ViewModel;
+public class OrderDetailsViewModel
+{
+    public int OrderId { get; set; }
+    public string InvoiceNumber { get; set; }
+    public string Status { get; set; }
+    public string PaymentMode { get; set; }
+    public DateTime PaidOn { get; set; }
+    public DateTime PlacedOn { get; set; }
+    public DateTime? ModifiedOn { get; set; }
+    public TimeSpan OrderDuration { get; set; }
+    public double TotalAmount { get; set; }
+    public double SubTotal { get; set; }
+
+    public string CustomerName { get; set; }
+    public string Phone { get; set; }
+    public string Email { get; set; }
+    public int NumberOfPersons { get; set; }
+
+    public string TableName { get; set; }
+    public string SectionName { get; set; }
+
+    public List<OrderItemViewModel> OrderItems { get; set; }
+
+    public List<OrderTaxViewModel> Taxes { get; set; }
+}
+
+public class OrderItemViewModel
+{
+    public int SrNo { get; set; }
+    public string ItemName { get; set; }
+    public int Quantity { get; set; }
+    public double Price { get; set; }
+    public double TotalAmount { get; set; }
+    public string Status { get; set; }
+    public List<OrderItemModifierViewModel> Modifiers { get; set; }
+}
+
+public class OrderItemModifierViewModel
+{
+    public string ModifierName { get; set; }
+    public int Quantity { get; set; }
+    public double Price { get; set; }
+    public double TotalAmount { get; set; }
+}
+
+public class OrderTaxViewModel
+{
+    public string TaxName { get; set; }
+    public double TaxValue { get; set; }
+}@model PizzaShop.Entity.ViewModel.OrderDetailsViewModel
+@{
+    Layout = "~/Views/Shared/_SecondLayout.cshtml";
+    ViewData["Title"] = "OrderDetails";
+}
+
+<div class="row-11 d-flex align-items-center justify-content-center">
+    <div class="row w-75">
+        <div class="text-Users-title my-3 mx-2 fs-2 col-6">
+            Order-Details
+        </div>
+        <div class="col my-3 text-align-right">
+            <a asp-controller="Order" asp-action="Index">
+                <button class="px-3 py-2 back-button">
+                    Back
+                </button>
+            </a>
+        </div>
+        <div class=" col-12 my-3 bg-white table-shadow p-2">
+            <div class="row-12 d-flex w-100 align-items-center">
+                <p class=" col-3 fs-4 ">Order Summary</p>
+                <p class="order-status fs-5 col-2">@Model.Status</p>
+                <div class="col-7 d-flex justify-content-end p-2">
+                    <button id="exportPdfBtn" data-order-id="@Model.OrderId" class="row px-3 p-2 send-button export-button">
+                        <div class="d-flex">
+                            <i class="fa-solid fa-file-export my-2"></i>
+                            <p class="my-1">Export</p>
                         </div>
-                        <div class="pagination-container">
-                            <nav aria-label="Page navigation">
-                                <ul class="pagination" id="pagination">
-                                    <!-- Pagination will be generated here -->
-                                </ul>
-                            </nav>
-                        </div>
-                    </div>
+                    </button>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="send-button px-3 py-1" id="addSelectedModifiers"
-                        data-bs-dismiss="modal">Add</button>
-                    <button type="button" class="back-button px-3 py-1" data-bs-dismiss="modal">Cancel</button>
+            </div>
+            <div class="row">
+                <div class="col-2">
+                    Invoice No :
+                </div>
+                <div class="col-1">
+                    @Model.InvoiceNumber
+                </div>
+            </div>
+            <div class="row w-100">
+                <div class="col-2 w-auto">
+                    Paid On:
+                </div>
+                <div class="col-1 w-auto">
+                    @Model.PaidOn.ToString("yyyy-MM-dd HH:mm")
+                </div>
+                <div class="col-2 w-auto">
+                    Placed On:
+                </div>
+                <div class="col-1 w-auto">
+                    @Model.PlacedOn.ToString("yyyy-MM-dd HH:mm")
+                </div>
+                <div class="col-2 w-auto">
+                    Modified On:
+                </div>
+                <div class="col-1 w-auto">
+                    @(Model.ModifiedOn?.ToString("yyyy-MM-dd HH:mm") ?? "N/A")
+                </div>
+                <div class="col-2 w-auto">
+                    Order Duration:
+                </div>
+                <div class="col-1 w-auto">
+                    @Model.OrderDuration.ToString(@"hh\:mm")
                 </div>
             </div>
         </div>
+        <div class="col-6 bg-white table-shadow">
+            <div class="row d-flex">
+                <i class="fa-regular fa-user col"></i>
+                <p>
+                    Customer-Details
+                </p>
+            </div>
+            <div class="row">
+                <p class="col">Name: @Model.CustomerName</p>
+            </div>
+            <div class="row">
+                <p class="col">Phone: @Model.Phone</p>
+            </div>
+            <div class="row">
+                <p class="col">No. Of Person: @Model.NumberOfPersons</p>
+            </div>
+            <div class="row">
+                <p class="col">Email : @Model.Email</p>
+            </div>
+        </div>
+        <div class="col-6 bg-white table-shadow">
+            <div>
+                <i class="fa-solid fa-chair"></i>
+                <p>
+                    Table Details
+                </p>
+            </div>
+            <div class="row">
+                <p class="col">Table: @Model.TableName</p>
+            </div>
+            <div class="row">
+                <p class="col">Section: @Model.SectionName</p>
+            </div>
+        </div>
+        <div class="col-12 my-2 bg-white table-shadow">
+            <p>Order Items</p>
+            <div class="table-responsive row m-2">
+                <table class="table ">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="text-black-50">Sr.no</th>
+                            <th scope="col" class="text-black-50">Item</th>
+                            <th scope="col" class="text-black-50">Quantity</th>
+                            <th scope="col" class="text-black-50">Price</th>
+                            <th scope="col" class="text-black-50">Total Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.OrderItems)
+                        {
+                            <tr>
+                                <td>
+                                    @item.SrNo
+                                </td>
+                                <td>
+                                    @item.ItemName
+                                    @if (item.Modifiers.Any())
+                                    {
+                                        <div>
+                                            @foreach (var modifier in item.Modifiers)
+                                            {
+                                                <li>
+                                                    @modifier.ModifierName
+                                                </li>
+                                            }
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    @item.Quantity
+                                    @if (item.Modifiers.Any())
+                                    {
+                                        <div>
+                                            @foreach (var modifier in item.Modifiers)
+                                            {
+                                                <div>
+                                                    @modifier.Quantity
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    @item.Price.ToString("0.00")
+                                    @if (item.Modifiers.Any())
+                                    {
+                                        <div>
+                                            @foreach (var modifier in item.Modifiers)
+                                            {
+                                                <div>
+                                                    @modifier.Price.ToString("0.00")
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    @((item.Price * item.Quantity).ToString("0.00"))
+                                    @if (item.Modifiers.Any())
+                                    {
+                                        <div>
+                                            @foreach (var modifier in item.Modifiers)
+                                            {
+                                                <div>
+                                                    @((modifier.Price * modifier.Quantity).ToString("0.00"))
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="justify-content-end w-100 col">
+                <p class="text-align-right"> SubTotal:
+                    @{
+                        double subTotal = 0, total = 0;
+                        @foreach (var item in Model.OrderItems)
+                        {
+                            subTotal += item.Price * item.Quantity;
+                            @if (item.Modifiers.Any())
+                            {
+                                @foreach (var modifier in item.Modifiers)
+                                {
+                                    subTotal += modifier.Price * modifier.Quantity;
+                                }
+                            }
+                        }
+                        total += subTotal;
+                    }
+                    @("₹ " + subTotal.ToString("0.00"))</p>
+                @foreach (var tax in Model.Taxes)
+                {
+                    <p class="text-align-right"> @tax.TaxName: @("₹ " + ((subTotal * tax.TaxValue * 0.01).ToString("0.00")))</p>
+                    total += (subTotal * tax.TaxValue * 0.01);
+                }
+                <p class="text-align-right"> Total: @("₹ " + (total.ToString("0.00")))</p>
+            </div>
+        </div>
     </div>
+</div>
